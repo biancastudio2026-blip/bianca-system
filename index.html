@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bianca_eye.studio 管理系統 (V40 模特價獨立版)</title>
+    <title>Bianca_eye.studio 管理系統 (V42 自動存檔版)</title>
     <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
         /* --- 核心 CSS --- */
@@ -12,7 +12,7 @@
         ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; } ::-webkit-scrollbar-thumb { background: var(--dark-pink); border-radius: 4px; } ::-webkit-scrollbar-thumb:hover { background: #a86e7b; }
         button { font-family: inherit; cursor: pointer; border: 2px solid var(--text-color); transition: 0.2s; }
         button:hover { transform: translateY(-2px); box-shadow: 2px 2px 0 var(--text-color); }
-        input, select { border: 2px solid var(--main-pink); border-radius: 8px; padding: 5px; font-family: inherit; outline: none; color: var(--text-color); }
+        input, select, textarea { border: 2px solid var(--main-pink); border-radius: 8px; padding: 5px; font-family: inherit; outline: none; color: var(--text-color); }
         
         /* 登入畫面 */
         #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #Fdfbfb; background-image: radial-gradient(#EAC8D0 1px, transparent 1px); background-size: 20px 20px; z-index: 9999; display: flex; justify-content: center; align-items: center; }
@@ -122,7 +122,7 @@
     <div id="login-overlay">
         <div class="login-box">
             <h2>Bianca<br>Eye Studio</h2>
-            <div style="font-size: 0.9rem; margin-bottom: 15px; color: var(--dark-pink);">✨ V40 模特價獨立版</div>
+            <div style="font-size: 0.9rem; margin-bottom: 15px; color: var(--dark-pink);">✨ V42 自動存檔版</div>
             <input type="email" id="login_email" class="login-input" placeholder="Firebase Email">
             <input type="password" id="login_pwd" class="login-input" placeholder="密碼">
             <button id="btnLogin" class="login-btn">登入系統</button>
@@ -279,14 +279,14 @@
             <div class="content-card">
                 <div id="profile" class="tab-content active">
                     <div class="scroll-container">
-                        <div class="form-section"><div class="form-header">基本資料</div><div class="form-body"><div class="form-row"><label>姓名：<input type="text" id="p_name" oninput="window.debounceSaveProfile()"></label><label>電話：<input type="text" id="p_phone"></label></div><div class="form-row"><label>生日：<input type="date" id="p_birthday" onchange="window.saveProfile()"></label></div><div class="form-row"><label style="align-self: flex-start; margin-top: 5px;">從哪認識 Bianca：</label><div style="display:flex; flex-direction:column; gap:5px;"><label><input type="checkbox"> Instagram</label><label><input type="checkbox"> Threads</label><label><input type="checkbox"> Facebook</label><label><input type="checkbox"> 朋友介紹 <input type="text" class="inline-input" placeholder="朋友姓名"></label></div></div></div></div>
-                        <div class="form-section"><div class="form-header">眼部狀況 & 習慣</div><div class="form-body"><div class="form-row"><label>睫毛狀況：</label><label><input type="checkbox"> 短</label><label><input type="checkbox"> 中</label><label><input type="checkbox"> 長</label><label><input type="checkbox"> 濃</label><label><input type="checkbox"> 稀疏</label></div><div class="form-row"><label>眼型：</label><label><input type="checkbox"> 大小眼</label><label><input type="checkbox"> 單眼皮</label><label><input type="checkbox"> 內雙</label><label><input type="checkbox"> 雙眼皮</label><label><input type="checkbox"> 泡泡眼</label><label><input type="checkbox"> 睫毛下垂</label><label><input type="checkbox"> 睫毛倒插</label></div><div class="form-row"><label>眼睛疾病：<input type="text" placeholder="無 / 有，請說明"></label></div><div class="form-row"><label>是否懷孕：<input type="checkbox"> 無 <input type="checkbox"> 有</label></div><div class="form-row"><label>是否過敏：<input type="checkbox"> 無 <input type="checkbox"> 染髮 <input type="checkbox"> 乳膠 其他 <input type="text" style="width:100px"></label></div><div class="form-row"><label>有無操作過：<input type="text" placeholder="無 / 有，大約幾次"></label></div><div class="form-row"><label>保養習慣：<input type="text" placeholder="無 / 有，使用產品"></label></div><div class="form-row"><label>上妝習慣：<input type="checkbox"> 淡妝 <input type="checkbox"> 濃妝 <input type="checkbox"> 著重眼妝</label></div></div></div>
+                        <div class="form-section"><div class="form-header">基本資料</div><div class="form-body"><div class="form-row"><label>姓名：<input type="text" id="p_name" oninput="window.debounceSaveProfile()"></label><label>電話：<input type="text" id="p_phone" oninput="window.debounceSaveProfile()"></label></div><div class="form-row"><label>生日：<input type="date" id="p_birthday" onchange="window.saveProfile()"></label></div><div class="form-row"><label style="align-self: flex-start; margin-top: 5px;">從哪認識 Bianca：</label><div class="checkbox-group" style="display:flex; flex-direction:column; gap:5px;"><label><input type="checkbox" data-key="source_ig"> Instagram</label><label><input type="checkbox" data-key="source_threads"> Threads</label><label><input type="checkbox" data-key="source_fb"> Facebook</label><label><input type="checkbox" data-key="source_friend"> 朋友介紹 <input type="text" class="inline-input" id="p_friend_name" placeholder="朋友姓名" oninput="window.debounceSaveProfile()"></label></div></div></div></div>
+                        <div class="form-section"><div class="form-header">眼部狀況 & 習慣</div><div class="form-body"><div class="form-row"><label>睫毛狀況：</label><div class="checkbox-group"><label><input type="checkbox" data-key="lash_short"> 短</label><label><input type="checkbox" data-key="lash_med"> 中</label><label><input type="checkbox" data-key="lash_long"> 長</label><label><input type="checkbox" data-key="lash_thick"> 濃</label><label><input type="checkbox" data-key="lash_thin"> 稀疏</label></div></div><div class="form-row"><label>眼型：</label><div class="checkbox-group"><label><input type="checkbox" data-key="eye_size"> 大小眼</label><label><input type="checkbox" data-key="eye_single"> 單眼皮</label><label><input type="checkbox" data-key="eye_inner"> 內雙</label><label><input type="checkbox" data-key="eye_double"> 雙眼皮</label><label><input type="checkbox" data-key="eye_puffy"> 泡泡眼</label><label><input type="checkbox" data-key="eye_down"> 睫毛下垂</label><label><input type="checkbox" data-key="eye_inverse"> 睫毛倒插</label></div></div><div class="form-row"><label>眼睛疾病：<input type="text" id="p_disease" placeholder="無 / 有，請說明" oninput="window.debounceSaveProfile()"></label></div><div class="form-row"><label>是否懷孕：<input type="checkbox" data-key="preg_no"> 無 <input type="checkbox" data-key="preg_yes"> 有</label></div><div class="form-row"><label>是否過敏：<input type="checkbox" data-key="allergy_no"> 無 <input type="checkbox" data-key="allergy_dye"> 染髮 <input type="checkbox" data-key="allergy_latex"> 乳膠 其他 <input type="text" id="p_allergy_other" style="width:100px" oninput="window.debounceSaveProfile()"></label></div><div class="form-row"><label>有無操作過：<input type="text" id="p_exp" placeholder="無 / 有，大約幾次" oninput="window.debounceSaveProfile()"></label></div><div class="form-row"><label>保養習慣：<input type="text" id="p_habit" placeholder="無 / 有，使用產品" oninput="window.debounceSaveProfile()"></label></div><div class="form-row"><label>上妝習慣：<input type="checkbox" data-key="makeup_light"> 淡妝 <input type="checkbox" data-key="makeup_heavy"> 濃妝 <input type="checkbox" data-key="makeup_eye"> 著重眼妝</label></div></div></div>
                         <div class="form-section"><div class="form-header">同意書 & 簽名</div><div class="form-body">
-                            <label class="agree-label"><input type="checkbox"> <span>我知道本身有任何過敏或眼睛不適現象，我將事先告知服務人員，並了解由於每個人體質不同，自知悉店家服務所使用之產品均經過合格認證，且服務人員均經過合格技術鑑定，若因個人體質關係或衛生問題產生不適現象，服務店家可享有免責權。</span></label>
-                            <label class="agree-label"><input type="checkbox"> <span>我知道睫毛管理後，因每個人的習慣跟保養方式不同，睫毛生長速度也不盡相同，故店家無法提供任何的保固期，其他問題可直接與店家聯繫，店家將誠心協助。</span></label>
-                            <label class="agree-label"><input type="checkbox"> <span>我知道每個人完成後的感覺不同，取決於睫毛先天條件。</span></label>
-                            <label class="agree-label" style="background:#FFF0F5; padding:5px; border-radius:5px;"><input type="checkbox"> <span>我知道術後24小時內，需保持睫毛乾燥，避免夾睫毛、揉眼睛，以維持睫毛健康度、捲翹度。</span></label>
-                            <label class="agree-label"><input type="checkbox"> <span>我已閱讀並了解美睫後保養方式，及維護細項，了解美睫後睫毛保護與維護是我自己的責任。</span></label>
+                            <label class="agree-label"><input type="checkbox" data-key="agree_1"> <span>我知道本身有任何過敏或眼睛不適現象，我將事先告知服務人員，並了解由於每個人體質不同，自知悉店家服務所使用之產品均經過合格認證，且服務人員均經過合格技術鑑定，若因個人體質關係或衛生問題產生不適現象，服務店家可享有免責權。</span></label>
+                            <label class="agree-label"><input type="checkbox" data-key="agree_2"> <span>我知道睫毛管理後，因每個人的習慣跟保養方式不同，睫毛生長速度也不盡相同，故店家無法提供任何的保固期，其他問題可直接與店家聯繫，店家將誠心協助。</span></label>
+                            <label class="agree-label"><input type="checkbox" data-key="agree_3"> <span>我知道每個人完成後的感覺不同，取決於睫毛先天條件。</span></label>
+                            <label class="agree-label" style="background:#FFF0F5; padding:5px; border-radius:5px;"><input type="checkbox" data-key="agree_4"> <span>我知道術後24小時內，需保持睫毛乾燥，避免夾睫毛、揉眼睛，以維持睫毛健康度、捲翹度。</span></label>
+                            <label class="agree-label"><input type="checkbox" data-key="agree_5"> <span>我已閱讀並了解美睫後保養方式，及維護細項，了解美睫後睫毛保護與維護是我自己的責任。</span></label>
                             <p style="margin-top:20px;">顧客簽名：</p><canvas id="signature-pad"></canvas><button type="button" class="add-btn" onclick="window.clearSignature()" style="margin-top:5px; font-size:0.9rem; padding:5px;">清除重簽</button></div></div>
                         <button type="button" class="btn-save" onclick="window.saveProfile()">💾 更新資料至雲端</button>
                     </div>
@@ -346,8 +346,14 @@
         // --- Utilities ---
         function getLocalYMD() {
             const d = new Date();
-            // This trick gives YYYY-MM-DD in local time
             return new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+        }
+        
+        function isTodayBirthday(birthdayStr) {
+            if (!birthdayStr) return false;
+            const today = new Date();
+            const [y, m, d] = birthdayStr.split('-');
+            return (parseInt(m) === today.getMonth() + 1) && (parseInt(d) === today.getDate());
         }
 
         // --- POS Logic ---
@@ -367,6 +373,7 @@
         let currentClientId = null;
         let unsubscribeDaily = null;
         let unsubscribeMonthly = null;
+        let saveTimer = null; // V41: Debounce timer variable
 
         function startListeningDB() {
             onSnapshot(query(collection(db, "clients"), orderBy("id", "desc")), (snap) => {
@@ -413,26 +420,21 @@
             updateCalculations(); 
         }
 
-        // V36: New Expense Function
         window.addExpense = (type) => {
             let amt = prompt(`請輸入[${type}]金額：`);
             if(!amt || isNaN(amt)) return;
             let note = prompt(`請輸入[${type}]備註 (可選)：`, "");
             let finalName = type;
             if(note) finalName += ` (${note})`;
-            
-            // Expense Logic: Negative Price, Category '支出'
             addToCart({ name: finalName, price: -Math.abs(parseInt(amt)), category: '支出', type: 'expense' });
         }
 
-        // V38: Add Model Price
         window.addModelPrice = () => {
             let amt = prompt("請輸入模特價金額：");
             if(!amt || isNaN(amt) || parseInt(amt) < 0) return alert("請輸入有效金額");
             let note = prompt("請輸入備註 (例如: 項目名稱)：", "");
             let finalName = "模特價";
             if(note) finalName += `-${note}`;
-            // Categorize as '課程' so it counts as revenue and enables session recording
             addToCart({ name: finalName, price: parseInt(amt), category: '課程' });
         }
 
@@ -451,29 +453,24 @@
             const hasUpper = hasHistory(selectedPosClient, "上睫毛");
             const hasBrow = hasHistory(selectedPosClient, "野生眉");
 
-            // Reset counts
             const counts = { upper:0, lower:0, brow:0, tintUp:0, tintLow:0 };
 
             cart.forEach(item => {
                 item.appliedAuto = null; 
-                // V40: Skip Model Price for Combo/Auto Discounts
+                // V40: Skip Model Price for auto calculation
                 if(item.name.includes("模特價")) return;
 
                 if(item.name.includes("上睫毛管理") && !hasUpper) { item.price = 699; item.appliedAuto = "首次體驗優惠"; }
                 if(item.name === "野生眉雕塑" && !hasBrow) { item.price = 699; item.appliedAuto = "首次體驗優惠"; }
 
-                // Count standard items for combos
                 if(item.name.includes("上睫毛管理")) counts.upper++;
                 if(item.name.includes("下睫毛管理")) counts.lower++;
                 if(item.name.includes("野生眉")) counts.brow++;
                 if(item.name.includes("濃黑養護-上睫毛")) counts.tintUp++;
-                if(item.name.includes("濃黑養護-下睫毛")) counts.tintLow++;
+                if(i.name.includes("濃黑養護-下睫毛")) counts.tintLow++;
             });
 
-            // Filter existing auto discounts
             cart = cart.filter(i => i.type !== 'auto_discount');
-            
-            // Apply combos based on standard item counts
             if(counts.upper > 0 && counts.lower > 0) cart.push({ name: "加購下睫毛優惠", price: -200, type: 'auto_discount' });
             if((counts.upper > 0 || counts.lower > 0) && counts.brow > 0) cart.push({ name: "耀眼組合優惠", price: -100, type: 'auto_discount' });
             if(counts.tintUp > 0 && counts.tintLow > 0) cart.push({ name: "存在感Up優惠", price: -50, type: 'auto_discount' });
@@ -529,7 +526,7 @@
             const useBal = document.getElementById('use_balance').checked;
             const balance = selectedPosClient ? (selectedPosClient.balance || 0) : 0;
             let deduct = 0;
-            if(useBal && grandTotal > 0) { // Only deduct if positive total
+            if(useBal && grandTotal > 0) { 
                  deduct = Math.min(grandTotal, balance);
             }
             let remain = grandTotal - deduct;
@@ -538,7 +535,6 @@
             document.getElementById('remain_display').innerText = `$${remain}`;
             
             const payRow = document.getElementById('final_pay_method_row');
-            // If negative (payout), show method too (how we paid them)
             payRow.style.display = 'flex'; 
         }
 
@@ -633,7 +629,6 @@
             });
         }
 
-        // --- Reports Logic ---
         function getROCDate(d) {
             const date = d ? new Date(d) : new Date();
             return `${date.getFullYear()-1911}/${String(date.getMonth()+1).padStart(2,'0')}/${String(date.getDate()).padStart(2,'0')}`;
@@ -672,8 +667,7 @@
                         total += d.total;
                         const time = new Date(d.timestamp).toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit'});
                         const displayItem = d.category || d.items; 
-                        const delBtn = isLocked ? '' : `<button class="delete-btn" onclick="window.deleteDailyRecord('${d.id}')">🗑️</button>`;
-                        // V36: Amount Color (Red for negative)
+                        const delBtn = `<button class="delete-btn" onclick="window.deleteDailyRecord('${d.id}')">🗑️</button>`;
                         const amtStyle = d.total < 0 ? 'color:var(--danger-color);font-weight:bold' : '';
                         tbody.innerHTML += `<tr><td>${time}</td><td>${d.client}</td><td>${displayItem}</td><td style="${amtStyle}">$${d.total}</td><td>${d.method}</td><td>${delBtn}</td></tr>`;
                     });
@@ -694,7 +688,6 @@
                         let newBal = client.balance || 0;
                         let isModified = false;
                         
-                        // Revert logic
                         if(target.method.includes("儲值扣")) {
                             const match = target.method.match(/儲值扣\$(\d+)/);
                             if(match) { newBal += parseInt(match[1]); isModified = true; }
@@ -745,7 +738,7 @@
 
         window.renderMonthlyReport = () => {
             if(unsubscribeMonthly) unsubscribeMonthly();
-            const picker = document.getElementById('monthlyPicker').value; // 2026-01
+            const picker = document.getElementById('monthlyPicker').value;
             const start = picker + "-01";
             const end = picker + "-31";
 
@@ -771,7 +764,6 @@
             });
         }
 
-        // --- CRM Functions ---
         window.renderClientList=()=>{
             const l=document.getElementById('clientList');
             const f=document.getElementById('monthFilter').value;
@@ -782,7 +774,11 @@
                 if(s){
                     const li=document.createElement('li');
                     li.className=`client-item ${c.id===currentClientId?'active':''}`;
-                    li.innerHTML=`<span>${c.name}</span><small>$${c.balance||0}</small>`;
+                    let birthdayIcon = '';
+                    if (isTodayBirthday(c.birthday)) {
+                        birthdayIcon = ' 🎂';
+                    }
+                    li.innerHTML=`<span>${c.name}${birthdayIcon}</span><small>$${c.balance||0}</small>`;
                     li.addEventListener('click', () => {
                         window.loadClient(c.id);
                         document.querySelectorAll('.client-item').forEach(i=>i.classList.remove('active'));
@@ -793,18 +789,108 @@
             })
         };
         
-        window.loadClient=(id)=>{currentClientId=id;const c=clients.find(x=>x.id===id);document.getElementById('mainContainer').style.visibility='visible';
-            document.getElementById('p_name').value=c.name||'';document.getElementById('p_phone').value=c.phone||'';document.getElementById('p_birthday').value=c.birthday||'';document.getElementById('clientNotes').value=c.notes||'';
-            const sL=document.getElementById('sessionList');sL.innerHTML='';if(c.sessions)c.sessions.forEach((s,i)=>{let h=`<div style="background:#FFF0F5;border:1px solid #EAC8D0;margin-bottom:10px;padding:10px;border-radius:10px;"><div style="display:flex;justify-content:space-between;"><div><b>${s.date}</b><br>${s.items.join(', ')}</div><button style="background:var(--danger-color);color:white;border:none;padding:2px 8px;border-radius:5px;cursor:pointer;" onclick="window.deleteSession(${i})">🗑️</button></div><div class="photos-container">${renderPG(i,'prePhotos',s.prePhotos||[],'前')}${renderPG(i,'padPhotos',s.padPhotos||[],'墊片')}${renderPG(i,'postPhotos',s.postPhotos||[],'後')}</div></div>`;sL.innerHTML+=h;});
-            const bL=document.getElementById('billingList');bL.innerHTML='';if(c.transactions)c.transactions.forEach((t, i)=>{bL.innerHTML+=`<tr><td>${t.date}</td><td>${t.item}</td><td>$${t.amt}</td><td><button class="delete-btn" onclick="window.deleteTransaction(${i})">🗑️</button></td></tr>`;});
+        window.loadClient=(id)=>{
+            if(saveTimer) clearTimeout(saveTimer);
+            currentClientId=id;
+            const c=clients.find(x=>x.id===id);
+            document.getElementById('mainContainer').style.visibility='visible';
+            
+            // V42: Clear all checkboxes first
+            document.querySelectorAll('input[type="checkbox"]').forEach(el => el.checked = false);
+            
+            // Set simple fields
+            document.getElementById('p_name').value=c.name||'';
+            document.getElementById('p_phone').value=c.phone||'';
+            document.getElementById('p_birthday').value=c.birthday||'';
+            document.getElementById('clientNotes').value=c.notes||'';
+            document.getElementById('p_friend_name').value = c.friend_name || '';
+            document.getElementById('p_disease').value = c.eye_disease || '';
+            document.getElementById('p_allergy_other').value = c.allergy_other || '';
+            document.getElementById('p_exp').value = c.experience || '';
+            document.getElementById('p_habit').value = c.habit || '';
+
+            // Set checkboxes based on profileData
+            if(c.profileData) {
+                for (const [key, val] of Object.entries(c.profileData)) {
+                    const el = document.querySelector(`input[data-key="${key}"]`);
+                    if(el) el.checked = val;
+                }
+            }
+            
+            // Attach Auto-Save listeners to everything
+            attachAutoSave();
+            
+            // Clear signature pad
+            window.clearSignature();
+            // Load signature if exists (using the first session logic or specific field if we want to save it permanently)
+            // For now, prompt implies new signature. V42 logic focuses on form data.
+
+            const sL=document.getElementById('sessionList');sL.innerHTML='';
+            if(c.sessions)c.sessions.forEach((s,i)=>{
+                let h=`<div style="background:#FFF0F5;border:1px solid #EAC8D0;margin-bottom:10px;padding:10px;border-radius:10px;"><div style="display:flex;justify-content:space-between;"><div><b>${s.date}</b><br>${s.items.join(', ')}</div><button style="background:var(--danger-color);color:white;border:none;padding:2px 8px;border-radius:5px;cursor:pointer;" onclick="window.deleteSession(${i})">🗑️</button></div><div class="photos-container">${renderPG(i,'prePhotos',s.prePhotos||[],'前')}${renderPG(i,'padPhotos',s.padPhotos||[],'墊片')}${renderPG(i,'postPhotos',s.postPhotos||[],'後')}</div></div>`;
+                sL.innerHTML+=h;
+            });
+            
+            const bL=document.getElementById('billingList');bL.innerHTML='';
+            if(c.transactions)c.transactions.forEach((t, i)=>{
+                bL.innerHTML+=`<tr><td>${t.date}</td><td>${t.item}</td><td>$${t.amt}</td><td><button class="delete-btn" onclick="window.deleteTransaction(${i})">🗑️</button></td></tr>`;
+            });
             renderTags();
         };
         
+        function attachAutoSave() {
+            const inputs = document.querySelectorAll('#profile input, #profile textarea, #profile select');
+            inputs.forEach(el => {
+                el.oninput = window.debounceSaveProfile;
+                el.onchange = window.debounceSaveProfile;
+            });
+            
+            // Special handling for signature pad: save on mouseup (end of stroke)
+            const canvas = document.getElementById('signature-pad');
+            if(canvas) {
+                canvas.onmouseup = window.debounceSaveProfile;
+                canvas.ontouchend = window.debounceSaveProfile;
+            }
+        }
+        
         function renderPG(i,k,p,l){let h=`<div class="photo-column"><div style="text-align:center;font-size:0.8rem;color:#C79AA5;">${l}</div><div class="photo-grid">`;p.forEach(u=>h+=`<div class="photo-box has-img" style="background-image:url(${u})"></div>`);if(p.length<3)h+=`<label class="photo-box">+<input type="file" style="display:none" accept="image/*" onchange="window.uploadPhoto(${i},'${k}',this)"></label>`;return h+'</div></div>';}
         window.uploadPhoto=(i,k,inp)=>{if(inp.files[0]){const r=new FileReader();r.onload=e=>{const c=clients.find(x=>x.id===currentClientId);let ns=[...c.sessions];if(!ns[i][k])ns[i][k]=[];ns[i][k].push(e.target.result);updateDoc(doc(db,"clients",c.firebaseId),{sessions:ns});};r.readAsDataURL(inp.files[0]);}};
-        window.createNewClient=()=>{const n=prompt("姓名?");if(n)addDoc(collection(db,"clients"),{id:Date.now(),name:n,balance:0,birthday:"",sessions:[],transactions:[],notes:"",tags:[]})};
-        window.saveProfile=()=>{if(!currentClientId)return;const c=clients.find(x=>x.id===currentClientId);updateDoc(doc(db,"clients",c.firebaseId),{name:document.getElementById('p_name').value,phone:document.getElementById('p_phone').value,birthday:document.getElementById('p_birthday').value,notes:document.getElementById('clientNotes').value});};
-        window.debounceSaveProfile=()=>{clearTimeout(saveTimer);saveTimer=setTimeout(window.saveProfile,1000)};
+        window.createNewClient=()=>{const n=prompt("姓名?");if(n)addDoc(collection(db,"clients"),{id:Date.now(),name:n,balance:0,birthday:"",sessions:[],transactions:[],notes:"",tags:[], profileData:{}})};
+        
+        window.saveProfile=()=>{
+            if(!currentClientId) return;
+            const c=clients.find(x=>x.id===currentClientId);
+            if(c) {
+                // Collect all checkbox states
+                const profileData = {};
+                document.querySelectorAll('input[type="checkbox"][data-key]').forEach(el => {
+                    profileData[el.dataset.key] = el.checked;
+                });
+
+                // Collect Signature (if drawn)
+                // Note: Saving large base64 strings to Firestore documents frequently can hit limits. 
+                // For V42, we save strictly necessary text fields.
+                
+                updateDoc(doc(db,"clients",c.firebaseId),{
+                    name:document.getElementById('p_name').value,
+                    phone:document.getElementById('p_phone').value,
+                    birthday:document.getElementById('p_birthday').value,
+                    notes:document.getElementById('clientNotes').value,
+                    friend_name: document.getElementById('p_friend_name').value,
+                    eye_disease: document.getElementById('p_disease').value,
+                    allergy_other: document.getElementById('p_allergy_other').value,
+                    experience: document.getElementById('p_exp').value,
+                    habit: document.getElementById('p_habit').value,
+                    profileData: profileData
+                });
+            }
+        };
+        
+        window.debounceSaveProfile=()=>{
+            if(saveTimer) clearTimeout(saveTimer);
+            saveTimer=setTimeout(window.saveProfile,1500); // 1.5s delay
+        };
+
         window.saveSession=()=>{const c=clients.find(x=>x.id===currentClientId);const d=document.getElementById('sess_date').value.replace('T',' ');let i=[];if(document.getElementById('sess_upper').checked)i.push("上睫毛");if(document.getElementById('sess_lower').checked)i.push("下睫毛");if(document.getElementById('sess_brow').checked)i.push("野生眉");const ns={date:d,items:i,prePhotos:[],padPhotos:[],postPhotos:[]};updateDoc(doc(db,"clients",c.firebaseId),{sessions:[ns,...(c.sessions||[])]}).then(()=>window.closeModal('sessionModal'));};
         
         window.deleteSession = (idx) => {
@@ -832,14 +918,12 @@
             let updateData = { transactions: newTrans };
             if(isModified) updateData.balance = newBal;
             
-            // Delete matching session
             let newSessions = c.sessions ? [...c.sessions] : [];
             const sessIdx = newSessions.findIndex(s => s.date.startsWith(target.date) && s.items.join("+") === target.item);
             if (sessIdx > -1) { newSessions.splice(sessIdx, 1); updateData.sessions = newSessions; }
 
             await updateDoc(doc(db, "clients", c.firebaseId), updateData);
 
-            // Sync Delete from Daily (pos_records)
             const q = query(collection(db, "pos_records"), 
                 where("date", "==", target.date), 
                 where("client", "==", c.name), 

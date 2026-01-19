@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bianca_eye.studio 管理系統 (V36 收支整合版)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- 核心 CSS --- */
+        :root { --bg-color: #Fdfbfb; --main-pink: #EAC8D0; --dark-pink: #C79AA5; --text-color: #6D6063; --card-bg: #FFFFFF; --shadow: 4px 4px 0px #EAC8D0; --danger-color: #CD5C5C; --success-color: #2E8B57; --highlight-color: #FF69B4; --blue-color: #4682B4; --expense-color: #8B4513; }
+        body { font-family: 'Gaegu', "微軟正黑體", sans-serif; background-color: var(--bg-color); background-image: radial-gradient(#EAC8D0 1px, transparent 1px); background-size: 20px 20px; color: var(--text-color); margin: 0; padding: 0; height: 100vh; overflow: hidden; }
+        ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; } ::-webkit-scrollbar-thumb { background: var(--dark-pink); border-radius: 4px; } ::-webkit-scrollbar-thumb:hover { background: #a86e7b; }
+        button { font-family: inherit; cursor: pointer; border: 2px solid var(--text-color); transition: 0.2s; }
+        button:hover { transform: translateY(-2px); box-shadow: 2px 2px 0 var(--text-color); }
+        input, select { border: 2px solid var(--main-pink); border-radius: 8px; padding: 5px; font-family: inherit; outline: none; color: var(--text-color); }
+        
+        /* 登入畫面 */
+        #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #Fdfbfb; background-image: radial-gradient(#EAC8D0 1px, transparent 1px); background-size: 20px 20px; z-index: 9999; display: flex; justify-content: center; align-items: center; }
+        .login-box { background: white; padding: 40px; border-radius: 20px; border: 3px solid var(--text-color); box-shadow: 8px 8px 0 var(--main-pink); text-align: center; width: 300px; }
+        .login-input { width: 100%; padding: 10px; margin-bottom: 15px; box-sizing: border-box; font-size: 1.1rem; }
+        .login-btn { background: var(--dark-pink); color: white; padding: 10px 30px; border-radius: 10px; font-size: 1.2rem; width: 100%; }
+        .login-error { color: var(--danger-color); margin-top: 10px; font-weight: bold; display: none; }
+
+        /* 主選單 */
+        #dashboard-view { display: none; width: 100%; height: 100%; justify-content: center; align-items: center; gap: 40px; flex-direction: column; }
+        .dashboard-title { font-size: 3rem; font-weight: bold; color: var(--dark-pink); margin-bottom: 20px; text-shadow: 2px 2px 0 #fff; }
+        .menu-container { display: flex; gap: 30px; }
+        .menu-card { width: 220px; height: 220px; background: white; border: 3px solid var(--text-color); border-radius: 20px; box-shadow: 8px 8px 0 var(--main-pink); display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 1.5rem; color: var(--text-color); cursor: pointer; transition: 0.3s; }
+        .menu-card:hover { transform: scale(1.05) translateY(-5px); box-shadow: 12px 12px 0 var(--dark-pink); background: #FFF0F5; }
+        .menu-icon { font-size: 4rem; margin-bottom: 15px; }
+        .logout-btn-dash { position: absolute; top: 20px; right: 20px; background: white; color: var(--danger-color); padding: 5px 15px; border-radius: 10px; font-size: 1rem; cursor: pointer; z-index: 100;}
+
+        /* POS 結帳系統 */
+        #pos-view { display: none; width: 100%; height: 100%; padding: 20px; box-sizing: border-box; gap: 20px; }
+        .pos-left { flex: 6; background: white; border: 2px solid var(--text-color); border-radius: 20px; padding: 20px; display: flex; flex-direction: column; box-shadow: var(--shadow); overflow-y: auto; }
+        .pos-right { flex: 4; background: #FFF0F5; border: 2px solid var(--text-color); border-radius: 20px; padding: 20px; display: flex; flex-direction: column; box-shadow: var(--shadow); position: relative;}
+        .pos-header { font-size: 1.5rem; font-weight: bold; margin-bottom: 15px; color: var(--dark-pink); display: flex; justify-content: space-between; align-items: center; }
+        
+        .category-section { margin-bottom: 25px; border-bottom: 2px dashed #eee; padding-bottom: 15px; }
+        .category-title { font-size: 1.2rem; font-weight: bold; color: var(--text-color); margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+        .items-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+        .item-btn { 
+            background: white; border: 2px solid var(--main-pink); border-radius: 10px; padding: 10px; 
+            width: 120px; height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            transition: 0.2s; text-align: center; cursor: pointer; font-size: 1rem;
+        }
+        .item-btn:hover { background: var(--main-pink); color: white; transform: scale(1.05); }
+        .item-btn.special { border-style: dashed; background: #fafafa; }
+
+        .cart-list { flex-grow: 1; overflow-y: auto; background: white; border: 2px solid var(--main-pink); border-radius: 10px; padding: 10px; margin-bottom: 15px; }
+        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px dashed #eee; font-size: 1.1rem; }
+        .cart-remove { color: var(--danger-color); cursor: pointer; margin-left: 10px; font-weight: bold; }
+        .auto-discount-tag { color: var(--highlight-color); font-size: 0.8rem; display: block; margin-top: 2px; font-weight: bold;}
+        .first-time-badge { background: var(--highlight-color); color: white; padding: 2px 5px; border-radius: 4px; font-size: 0.8rem; margin-left: 5px; }
+        .receipt-time { font-size: 1.1rem; color: var(--text-color); text-align: right; margin-bottom: 5px; font-weight: bold; }
+
+        /* 餘額與支付區塊 */
+        .balance-display { background: #fff; border: 2px dashed var(--main-pink); padding: 10px; margin-bottom: 15px; border-radius: 10px; text-align: center; color: var(--text-color); font-size: 1.1rem; }
+        .balance-amount { color: var(--success-color); font-weight: bold; font-size: 1.3rem; }
+        .calc-area { background: white; padding: 15px; border-radius: 15px; border: 2px solid var(--text-color); }
+        .total-row { display: flex; justify-content: space-between; font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; color: var(--dark-pink); }
+        .split-pay-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 1.1rem; }
+        .checkout-btn { background: var(--dark-pink); color: white; width: 100%; padding: 15px; font-size: 1.5rem; border-radius: 10px; border: 2px solid var(--text-color); margin-top: 10px; }
+        .back-home-btn { background: #eee; padding: 5px 10px; border-radius: 5px; font-size: 0.9rem; }
+
+        /* 報表系統 */
+        .full-view { display: none; width: 100%; height: 100%; gap: 20px; padding: 20px; box-sizing: border-box; }
+        .report-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .report-table th, .report-table td { text-align: left; padding: 8px; border-bottom: 1px dashed var(--main-pink); font-size: 1.1rem; }
+        .report-table th { background: #FFF0F5; color: var(--dark-pink); }
+        .report-table tr.clickable:hover { background-color: #f0f0f0; } 
+        .report-footer { margin-top: 20px; font-size: 1.5rem; font-weight: bold; text-align: right; color: var(--dark-pink); border-top: 2px solid var(--text-color); padding-top: 10px;}
+
+        /* CRM 客戶管理 */
+        .sidebar { width: 250px; background: var(--card-bg); border: 2px solid var(--text-color); border-radius: 15px 255px 15px 25px / 255px 15px 225px 15px; padding: 20px; box-shadow: var(--shadow); display: flex; flex-direction: column; height: 100%; box-sizing: border-box; }
+        .main-container { flex-grow: 1; display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+        .client-list { list-style: none; padding: 0; overflow-y: auto; flex-grow: 1; }
+        .client-item { padding: 10px; border-bottom: 1px dashed var(--main-pink); cursor: pointer; font-size: 1.2rem; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
+        .client-item.active { background-color: #FFF0F5; font-weight: bold; border-left: 5px solid var(--dark-pink); }
+        .content-card { background: var(--card-bg); border: 2px solid var(--text-color); border-radius: 0 15px 15px 15px; box-shadow: var(--shadow); padding: 20px; flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; z-index: 5; }
+        
+        .tabs-header { display: flex; gap: 5px; padding-left: 10px; margin-bottom: -2px; z-index: 10; }
+        .tab-btn { background: #f0f0f0; border: 2px solid var(--text-color); border-bottom: none; padding: 8px 20px; font-size: 1.2rem; cursor: pointer; border-radius: 15px 15px 0 0; color: var(--text-color); position: relative; top: 2px; }
+        .tab-btn.active { background: var(--card-bg); font-weight: bold; color: var(--dark-pink); top: 0; padding-bottom: 10px; box-shadow: 0 -2px 0 var(--main-pink) inset; }
+        .tab-content { display: none; height: 100%; flex-direction: column; overflow: hidden; }
+        .tab-content.active { display: flex; }
+        .scroll-container { overflow-y: auto; flex-grow: 1; padding-right: 10px; display: flex; flex-direction: column; gap: 20px; }
+        
+        .form-section { border: 2px solid var(--main-pink); border-radius: 15px; background: #fff; display: flex; flex-direction: column; height: auto; min-height: 200px; flex-shrink: 0; margin-bottom: 15px; }
+        .form-header { background: var(--main-pink); color: white; padding: 10px 15px; font-size: 1.2rem; font-weight: bold; border-bottom: 2px solid var(--main-pink); flex-shrink: 0; }
+        .form-body { padding: 15px; overflow-y: auto; flex-grow: 1; }
+        .form-row { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 12px; align-items: center; }
+        .add-btn { background: var(--dark-pink); color: white; border: 2px solid var(--text-color); padding: 8px; border-radius: 10px; margin-bottom: 10px; text-align: center; }
+        .delete-btn { background: var(--danger-color); color: white; border: none; border-radius: 5px; padding: 2px 8px; font-size: 0.8rem; margin-left: 10px; cursor: pointer; }
+        
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); justify-content: center; align-items: center; z-index: 100; }
+        .modal-content { background: white; padding: 20px; border-radius: 15px; border: 3px solid var(--text-color); width: 400px; box-shadow: 5px 5px 0 rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
+        .close-btn { float: right; cursor: pointer; font-weight: bold; font-size: 1.2rem; }
+        .btn-save { background: var(--dark-pink); width: 100%; font-size: 1.2rem; margin-top: 20px; color: white; border: none; padding: 10px; border-radius: 10px; cursor: pointer;}
+        
+        /* Others */
+        .photos-container { display: flex; gap: 10px; margin-top: 10px; }
+        .photo-column { flex: 1; background: #fff; padding: 10px; border-radius: 10px; border: 1px dashed var(--main-pink); }
+        .photo-grid { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; }
+        .photo-box { width: 60px; height: 60px; border: 2px dashed #ccc; display: flex; align-items: center; justify-content: center; background-size: cover; cursor: pointer; border-radius: 8px; }
+        .photo-box.has-img { border: 2px solid var(--dark-pink); cursor: default; }
+        .tags-container { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+        .tag-chip { padding: 5px 15px; border: 2px solid var(--main-pink); border-radius: 20px; cursor: pointer; font-size: 1rem; transition: 0.2s; }
+        .tag-chip.active { background: var(--main-pink); color: white; border-color: var(--dark-pink); }
+        .add-tag-wrapper { display: flex; gap: 5px; align-items: center; margin-top: 10px;}
+        .agree-label { align-items: flex-start; line-height: 1.5; margin-bottom: 12px; display:flex; gap:5px;}
+        .agree-label input { margin-top: 5px; flex-shrink: 0; }
+        input[type="checkbox"] { transform: scale(1.2); accent-color: var(--dark-pink); }
+        #signature-pad { border: 2px dashed var(--text-color); border-radius: 10px; background: #fff; width: 100%; height: 150px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { text-align: left; padding: 8px; border-bottom: 1px dashed var(--main-pink); }
+        th { color: var(--dark-pink); background: #FFF0F5;}
+    </style>
+</head>
+<body>
+
+    <div id="login-overlay">
+        <div class="login-box">
+            <h2>Bianca<br>Eye Studio</h2>
+            <div style="font-size: 0.9rem; margin-bottom: 15px; color: var(--dark-pink);">✨ V36 收支整合版</div>
+            <input type="email" id="login_email" class="login-input" placeholder="Firebase Email">
+            <input type="password" id="login_pwd" class="login-input" placeholder="密碼">
+            <button id="btnLogin" class="login-btn">登入系統</button>
+            <div id="loginError" class="login-error"></div>
+        </div>
+    </div>
+
+    <div id="dashboard-view">
+        <button class="logout-btn-dash" id="btnLogout">登出</button>
+        <div class="dashboard-title">✨ 請選擇作業系統</div>
+        <div class="menu-container">
+            <div class="menu-card" onclick="window.goToPOS()">
+                <div class="menu-icon">🛒</div><div>結帳作業</div>
+            </div>
+            <div class="menu-card" onclick="window.goToCRM()">
+                <div class="menu-icon">👥</div><div>客戶管理</div>
+            </div>
+        </div>
+        <div class="menu-container" style="margin-top: 20px;">
+            <div class="menu-card" onclick="window.goToDaily()">
+                <div class="menu-icon">🌞</div><div>日結作業</div>
+            </div>
+            <div class="menu-card" onclick="window.goToMonthly()">
+                <div class="menu-icon">🌝</div><div>月結作業</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="pos-view">
+        <div class="pos-left">
+            <div class="pos-header">
+                <span>📦 項目選擇</span>
+                <button class="back-home-btn" onclick="window.goToDashboard()">🏠 回首頁</button>
+            </div>
+            
+            <div class="category-section">
+                <div class="category-title">💅 課程</div>
+                <div class="items-grid" id="pos_courses"></div>
+                <div class="items-grid" style="margin-top:10px">
+                    <div class="item-btn special" onclick="window.showTintModal()">濃黑養護<br><small>點擊選擇</small></div>
+                </div>
+            </div>
+
+            <div class="category-section">
+                <div class="category-title">🛍️ 產品</div>
+                <div class="items-grid" id="pos_products"></div>
+                
+                <div class="category-title" style="margin-top:15px; color:#4682B4;">💰 儲值專區</div>
+                <div class="items-grid">
+                    <div class="item-btn special" style="border-color:#4682B4;color:#4682B4; width:100%;" onclick="window.addTopUp()">儲值金<br><small>自訂金額 (購買點數)</small></div>
+                </div>
+            </div>
+            
+            <div class="category-section" style="margin-top:15px;">
+                <div class="category-title" style="color: var(--expense-color);">💸 支出 (負項)</div>
+                <div class="items-grid">
+                    <div class="item-btn special" style="border-color:var(--expense-color);color:var(--expense-color);" onclick="window.addExpense('耗材')">耗材<br><small>輸入金額</small></div>
+                    <div class="item-btn special" style="border-color:var(--expense-color);color:var(--expense-color);" onclick="window.addExpense('退款')">退款<br><small>輸入金額</small></div>
+                    <div class="item-btn special" style="border-color:var(--expense-color);color:var(--expense-color);" onclick="window.addExpense('設備')">設備<br><small>輸入金額</small></div>
+                </div>
+            </div>
+
+            <div class="category-section" style="border-bottom:none;">
+                <div class="category-title">🎁 優惠 / 其他</div>
+                <div class="items-grid" id="pos_discounts"></div>
+            </div>
+        </div>
+
+        <div class="pos-right">
+            <div class="pos-header">🧾 結帳清單</div>
+            <div class="receipt-time" id="receiptTime">--/--/-- --:--</div>
+            
+            <div class="form-row">
+                <input type="text" id="pos_client_name" list="client_list_suggestions" placeholder="輸入顧客姓名搜尋..." style="width: 100%;" oninput="window.checkPosClient(this.value)">
+                <datalist id="client_list_suggestions"></datalist>
+            </div>
+
+            <div class="balance-display">
+                儲值金餘額：<span id="posBalance" class="balance-amount">-</span>
+            </div>
+
+            <div class="cart-list" id="cartList"><div style="text-align:center; color:#ccc; margin-top:50px;">尚未選擇項目</div></div>
+            
+            <div class="calc-area">
+                <div class="total-row"><span>總金額：</span><span id="posTotal">$0</span></div>
+                
+                <div style="margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:10px;">
+                    <div class="split-pay-row">
+                        <label style="display:flex;align-items:center;cursor:pointer"><input type="checkbox" id="use_balance" onchange="window.updateCalculations()"> 使用儲值金扣款</label>
+                        <span id="deduct_display" style="color:var(--danger-color)">-$0</span>
+                    </div>
+                </div>
+
+                <div class="split-pay-row"><span>剩餘應付：</span><span id="remain_display" style="font-weight:bold">$0</span></div>
+
+                <div class="form-row" id="final_pay_method_row">
+                    <label>餘額支付：
+                        <select id="pos_method" style="flex-grow:1;"><option>現金</option><option>匯款</option><option>全支付</option></select>
+                    </label>
+                </div>
+                <button class="checkout-btn" onclick="window.submitCheckout()">💰 確認結帳</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="daily-view" class="full-view">
+        <div class="content-card">
+            <div class="pos-header"><span>🌞 日結作業 (即時同步)</span><button class="back-home-btn" onclick="window.goToDashboard()">🏠 回首頁</button></div>
+            <div style="font-size:1.2rem; margin-bottom:10px;">日期：<span id="dailyDate"></span></div>
+            <div style="overflow-y:auto; flex-grow:1;">
+                <table class="report-table">
+                    <thead><tr><th>時間</th><th>姓名</th><th>項目(分類)</th><th>金額</th><th>支付方式</th><th>操作</th></tr></thead>
+                    <tbody id="dailyList"></tbody>
+                </table>
+            </div>
+            <div class="report-footer">
+                本日淨收：<span id="dailyTotal">$0</span>
+                <span id="lockMsg" style="display:none; color:red; font-size:1rem; margin-left:10px;">(已結帳鎖定)</span>
+                <button id="closeDayBtn" class="btn-save" style="width:auto; margin-left:20px; font-size:1.2rem;" onclick="window.confirmDailyClose()">📅 執行當日結帳</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="monthly-view" class="full-view">
+        <div class="content-card">
+            <div class="pos-header"><span>🌝 月結作業 (點擊日期查看明細)</span><button class="back-home-btn" onclick="window.goToDashboard()">🏠 回首頁</button></div>
+            <div style="margin-bottom:10px;">月份：<input type="month" id="monthlyPicker" onchange="window.renderMonthlyReport()"></div>
+            <div style="overflow-y:auto; flex-grow:1;">
+                <table class="report-table"><thead><tr><th>日期</th><th>單數</th><th>總金額</th><th>狀態</th></tr></thead><tbody id="monthlyList"></tbody></table>
+            </div>
+            <div class="report-footer">本月總收：<span id="monthlyTotal">$0</span></div>
+        </div>
+    </div>
+
+    <div id="crm-view" class="full-view">
+        <div class="sidebar">
+            <div style="text-align:center; margin-bottom:10px;"><button class="back-home-btn" onclick="window.goToDashboard()">🏠 回首頁</button></div>
+            <button class="add-btn" onclick="window.createNewClient()">+ 新增顧客</button>
+            <select id="monthFilter" style="width:100%; margin-bottom:10px;" onchange="window.renderClientList()">
+                <option value="all">📅 所有壽星</option><option value="01">1月</option><option value="02">2月</option><option value="03">3月</option><option value="04">4月</option><option value="05">5月</option><option value="06">6月</option><option value="07">7月</option><option value="08">8月</option><option value="09">9月</option><option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
+            </select>
+            <ul class="client-list" id="clientList"></ul>
+        </div>
+        <div class="main-container" id="mainContainer">
+            <div class="tabs-header">
+                <button class="tab-btn active" onclick="window.switchTab('profile', event)">📋 個人資料</button>
+                <button class="tab-btn" onclick="window.switchTab('sessions', event)">👁️ 課程紀錄</button>
+                <button class="tab-btn" onclick="window.switchTab('billing', event)">💰 消費紀錄</button>
+                <button class="tab-btn" onclick="window.switchTab('notes', event)">📝 備註 / 標籤</button>
+            </div>
+            <div class="content-card">
+                <div id="profile" class="tab-content active">
+                    <div class="scroll-container">
+                        <div class="form-section"><div class="form-header">基本資料</div><div class="form-body"><div class="form-row"><label>姓名：<input type="text" id="p_name" oninput="window.debounceSaveProfile()"></label><label>電話：<input type="text" id="p_phone"></label></div><div class="form-row"><label>生日：<input type="date" id="p_birthday" onchange="window.saveProfile()"></label></div><div class="form-row"><label style="align-self: flex-start; margin-top: 5px;">從哪認識 Bianca：</label><div style="display:flex; flex-direction:column; gap:5px;"><label><input type="checkbox"> Instagram</label><label><input type="checkbox"> Threads</label><label><input type="checkbox"> Facebook</label><label><input type="checkbox"> 朋友介紹 <input type="text" class="inline-input" placeholder="朋友姓名"></label></div></div></div></div>
+                        <div class="form-section"><div class="form-header">眼部狀況 & 習慣</div><div class="form-body"><div class="form-row"><label>睫毛狀況：</label><label><input type="checkbox"> 短</label><label><input type="checkbox"> 中</label><label><input type="checkbox"> 長</label><label><input type="checkbox"> 濃</label><label><input type="checkbox"> 稀疏</label></div><div class="form-row"><label>眼型：</label><label><input type="checkbox"> 大小眼</label><label><input type="checkbox"> 單眼皮</label><label><input type="checkbox"> 內雙</label><label><input type="checkbox"> 雙眼皮</label><label><input type="checkbox"> 泡泡眼</label><label><input type="checkbox"> 睫毛下垂</label><label><input type="checkbox"> 睫毛倒插</label></div><div class="form-row"><label>眼睛疾病：<input type="text" placeholder="無 / 有，請說明"></label></div><div class="form-row"><label>是否懷孕：<input type="checkbox"> 無 <input type="checkbox"> 有</label></div><div class="form-row"><label>是否過敏：<input type="checkbox"> 無 <input type="checkbox"> 染髮 <input type="checkbox"> 乳膠 其他 <input type="text" style="width:100px"></label></div><div class="form-row"><label>有無操作過：<input type="text" placeholder="無 / 有，大約幾次"></label></div><div class="form-row"><label>保養習慣：<input type="text" placeholder="無 / 有，使用產品"></label></div><div class="form-row"><label>上妝習慣：<input type="checkbox"> 淡妝 <input type="checkbox"> 濃妝 <input type="checkbox"> 著重眼妝</label></div></div></div>
+                        <div class="form-section"><div class="form-header">同意書 & 簽名</div><div class="form-body">
+                            <label class="agree-label"><input type="checkbox"> <span>我知道本身有任何過敏或眼睛不適現象，我將事先告知服務人員，並了解由於每個人體質不同，自知悉店家服務所使用之產品均經過合格認證，且服務人員均經過合格技術鑑定，若因個人體質關係或衛生問題產生不適現象，服務店家可享有免責權。</span></label>
+                            <label class="agree-label"><input type="checkbox"> <span>我知道睫毛管理後，因每個人的習慣跟保養方式不同，睫毛生長速度也不盡相同，故店家無法提供任何的保固期，其他問題可直接與店家聯繫，店家將誠心協助。</span></label>
+                            <label class="agree-label"><input type="checkbox"> <span>我知道每個人完成後的感覺不同，取決於睫毛先天條件。</span></label>
+                            <label class="agree-label" style="background:#FFF0F5; padding:5px; border-radius:5px;"><input type="checkbox"> <span>我知道術後24小時內，需保持睫毛乾燥，避免夾睫毛、揉眼睛，以維持睫毛健康度、捲翹度。</span></label>
+                            <label class="agree-label"><input type="checkbox"> <span>我已閱讀並了解美睫後保養方式，及維護細項，了解美睫後睫毛保護與維護是我自己的責任。</span></label>
+                            <p style="margin-top:20px;">顧客簽名：</p><canvas id="signature-pad"></canvas><button type="button" class="add-btn" onclick="window.clearSignature()" style="margin-top:5px; font-size:0.9rem; padding:5px;">清除重簽</button></div></div>
+                        <button type="button" class="btn-save" onclick="window.saveProfile()">💾 更新資料至雲端</button>
+                    </div>
+                </div>
+                <div id="sessions" class="tab-content"><div style="text-align:right;margin-bottom:10px;"><button class="add-btn" onclick="window.openSessionModal()">+ 新增課程</button></div><div id="sessionList" style="overflow-y:auto;flex-grow:1;"></div></div>
+                <div id="billing" class="tab-content"><div style="text-align:right;margin-bottom:10px;"><button class="add-btn" onclick="window.jumpToPosWithClient()">+ 新增消費 (前往結帳)</button></div><div style="overflow-y:auto;flex-grow:1;"><table><thead><tr><th>日期</th><th>項目</th><th>金額</th><th>操作</th></tr></thead><tbody id="billingList"></tbody></table></div></div>
+                <div id="notes" class="tab-content"><h3>📌 標籤</h3><div class="tags-container" id="tagList"><span class="tag-chip" data-tag="黑名單" onclick="window.toggleTag('黑名單')">⚠️ 黑名單</span><span class="tag-chip" data-tag="VIP" onclick="window.toggleTag('VIP')">👑 VIP</span><span class="tag-chip" data-tag="容易遲到" onclick="window.toggleTag('容易遲到')">⏰ 容易遲到</span><span class="tag-chip" data-tag="喜歡安靜" onclick="window.toggleTag('喜歡安靜')">🤫 喜歡安靜</span><span class="tag-chip" data-tag="好聊天" onclick="window.toggleTag('好聊天')">💬 好聊天</span><span class="tag-chip" data-tag="追求完美" onclick="window.toggleTag('追求完美')">✨ 追求完美</span></div><div class="add-tag-wrapper"><input type="text" id="new_tag_input" placeholder="新標籤名稱" style="width:120px;"><button class="add-btn" style="margin:0; padding:5px 10px;" onclick="window.addNewCustomTag()">+ 自訂</button></div><h3>📝 備註</h3><textarea id="clientNotes" style="width:100%;height:200px;border:2px solid var(--main-pink);" oninput="window.debounceSaveProfile()"></textarea><button type="button" class="btn-save" onclick="window.saveProfile()">💾 更新備註</button></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="sessionModal" class="modal"><div class="modal-content"><span class="close-btn" onclick="window.closeModal('sessionModal')">&times;</span><h3>新增課程</h3><div class="form-row"><input type="datetime-local" id="sess_date"></div><div style="border:1px solid #ddd; padding:10px;"><label><input type="checkbox" id="sess_upper"> 上睫毛</label><br><label><input type="checkbox" id="sess_lower"> 下睫毛</label><br><label><input type="checkbox" id="sess_brow"> 野生眉</label></div><button class="btn-save" onclick="window.saveSession()">建立</button></div></div>
+    <div id="billingModal" class="modal"><div class="modal-content"><span class="close-btn" onclick="window.closeModal('billingModal')">&times;</span><h3>新增消費</h3><div class="form-row"><input type="text" id="bill_item" placeholder="項目"></div><div class="form-row"><input type="number" id="bill_amt" placeholder="金額"></div><button class="btn-save" onclick="window.saveTransaction()">確認</button></div></div>
+    <div id="tintModal" class="modal"><div class="modal-content"><span class="close-btn" onclick="window.closeModal('tintModal')">&times;</span><h3>濃黑養護 - 請選擇</h3><div style="display:flex; gap:10px; justify-content:center;"><button class="item-btn" onclick="window.addTint('上睫毛', 200)">上睫毛<br>$200</button><button class="item-btn" onclick="window.addTint('下睫毛', 100)">下睫毛<br>$100</button></div></div></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, updateDoc, doc, onSnapshot, query, orderBy, where, getDocs, deleteDoc, arrayUnion, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // 🔥 金鑰設定 🔥
+        const firebaseConfig = {
+            apiKey: "AIzaSyDOmZLFPtI6v7BpyoLuMG38XWM1PYZaVZE",
+            authDomain: "bianca-customer.firebaseapp.com",
+            projectId: "bianca-customer",
+            storageBucket: "bianca-customer.firebasestorage.app",
+            messagingSenderId: "200747670160",
+            appId: "1:200747670160:web:e1f03edddd2eb17ecad615",
+            measurementId: "G-EB2Z7H77BT"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // --- View Control ---
+        const views = { login: 'login-overlay', dashboard: 'dashboard-view', pos: 'pos-view', crm: 'crm-view', daily: 'daily-view', monthly: 'monthly-view' };
+        function showView(name) {
+            Object.values(views).forEach(id => document.getElementById(id).style.display = 'none');
+            document.getElementById(views[name]).style.display = (name === 'login' || name === 'dashboard') ? 'flex' : 'flex';
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) { showView('dashboard'); startListeningDB(); setInterval(updateClock, 1000); } else { showView('login'); }
+        });
+
+        window.startLogin = () => { signInWithEmailAndPassword(auth, document.getElementById('login_email').value, document.getElementById('login_pwd').value).catch(() => { document.getElementById('loginError').style.display='block'; document.getElementById('loginError').innerText="登入失敗"; }); }
+        document.getElementById('btnLogin').onclick = window.startLogin;
+        document.getElementById('btnLogout').onclick = () => signOut(auth).then(()=>location.reload());
+
+        window.goToDashboard = () => showView('dashboard');
+        window.goToPOS = () => { showView('pos'); renderPOS(); renderClientDatalist(); };
+        window.goToCRM = () => showView('crm');
+        window.goToDaily = (targetDate) => { showView('daily'); renderDailyReport(targetDate); };
+        window.goToMonthly = () => { showView('monthly'); document.getElementById('monthlyPicker').value=new Date().toISOString().slice(0,7); renderMonthlyReport(); };
+
+        // --- Utilities ---
+        function getLocalYMD() {
+            const d = new Date();
+            // This trick gives YYYY-MM-DD in local time
+            return new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+        }
+
+        // --- POS Logic ---
+        let defaultMenu = {
+            courses: [{ name: "上睫毛管理", price: 1200 }, { name: "下睫毛管理", price: 500 }, { name: "野生眉雕塑", price: 999 }],
+            products: [{ name: "睫毛雨衣", price: 600 }, { name: "睫毛滋養液", price: 930 }],
+            discounts: [
+                { name: "9折優惠", type: "discount", val: 0.9 }, 
+                { name: "分享優惠", type: "fixed_discount", val: 50 }, 
+                { name: "8週回訪優惠", type: "fixed_discount", val: 100 }
+            ]
+        };
+        let menuData = JSON.parse(localStorage.getItem('posMenu')) || defaultMenu;
+        let cart = [];
+        let selectedPosClient = null;
+        let clients = [];
+        let currentClientId = null;
+        let unsubscribeDaily = null;
+        let unsubscribeMonthly = null;
+
+        function startListeningDB() {
+            onSnapshot(query(collection(db, "clients"), orderBy("id", "desc")), (snap) => {
+                clients = snap.docs.map(d => ({ firebaseId: d.id, ...d.data() }));
+                window.renderClientList();
+                renderClientDatalist();
+                if(currentClientId) window.loadClient(currentClientId);
+            });
+        }
+
+        function renderPOS() {
+            renderSection('pos_courses', menuData.courses, '課程');
+            renderSection('pos_products', menuData.products, '產品');
+            renderSection('pos_discounts', menuData.discounts, '優惠');
+        }
+        function renderSection(id, items, category) {
+            const el = document.getElementById(id); el.innerHTML = '';
+            items.forEach(item => {
+                const btn = document.createElement('div'); btn.className = 'item-btn';
+                if(item.type === 'discount') { 
+                    btn.innerHTML = `<div style="font-weight:bold">${item.name}</div><small>全單折扣</small>`; 
+                    btn.onclick = () => addToCart({ name: item.name, price: 0, type: 'discount', val: item.val }); 
+                } 
+                else if(item.type === 'fixed_discount') { 
+                    btn.innerHTML = `<div style="font-weight:bold">${item.name}</div><small>-$${item.val}</small>`; 
+                    btn.onclick = () => addToCart({ name: item.name, price: -item.val, type: 'fixed_discount', val: item.val }); 
+                }
+                else { 
+                    btn.innerHTML = `<div style="font-weight:bold">${item.name}</div><div>$${item.price}</div>`; 
+                    btn.onclick = () => addToCart({ name: item.name, price: item.price, category: category }); 
+                }
+                el.appendChild(btn);
+            });
+        }
+
+        function renderClientDatalist() {
+            const dl = document.getElementById('client_list_suggestions'); dl.innerHTML = '';
+            clients.forEach(c => { const opt = document.createElement('option'); opt.value = c.name; dl.appendChild(opt); });
+        }
+
+        window.checkPosClient = (val) => {
+            selectedPosClient = clients.find(c => c.name === val) || null;
+            document.getElementById('posBalance').innerText = selectedPosClient ? `$${selectedPosClient.balance||0}` : '$0';
+            updateCalculations(); 
+        }
+
+        // V36: New Expense Function
+        window.addExpense = (type) => {
+            let amt = prompt(`請輸入[${type}]金額：`);
+            if(!amt || isNaN(amt)) return;
+            let note = prompt(`請輸入[${type}]備註 (可選)：`, "");
+            let finalName = type;
+            if(note) finalName += ` (${note})`;
+            
+            // Expense Logic: Negative Price, Category '支出'
+            addToCart({ name: finalName, price: -Math.abs(parseInt(amt)), category: '支出', type: 'expense' });
+        }
+
+        window.showTintModal = () => document.getElementById('tintModal').style.display='flex';
+        window.addTint = (type, price) => { addToCart({ name: `濃黑養護-${type}`, price: price, category: '課程' }); window.closeModal('tintModal'); }
+        window.addTopUp = () => { let amt=prompt("請輸入儲值金額："); if(amt&&!isNaN(amt)) addToCart({ name:"儲值金", price:parseInt(amt), type:'topup_purchase', category: '儲值金' }); }
+
+        function addToCart(item) {
+            if(item.type === 'discount' && cart.some(i => i.type === 'discount')) return alert("已有折扣");
+            cart.push(item);
+            updateCalculations();
+        }
+
+        function applyAutoDiscounts() {
+            if(!selectedPosClient) return;
+            const hasUpper = hasHistory(selectedPosClient, "上睫毛");
+            const hasBrow = hasHistory(selectedPosClient, "野生眉");
+
+            cart.forEach(item => {
+                item.appliedAuto = null; 
+                if(item.name === "上睫毛管理" && !hasUpper) { item.price = 699; item.appliedAuto = "首次體驗優惠"; }
+                if(item.name === "野生眉雕塑" && !hasBrow) { item.price = 699; item.appliedAuto = "首次體驗優惠"; }
+            });
+
+            const counts = { upper:0, lower:0, brow:0, tintUp:0, tintLow:0 };
+            cart.forEach(i => {
+                if(i.name.includes("上睫毛管理")) counts.upper++;
+                if(i.name.includes("下睫毛管理")) counts.lower++;
+                if(i.name.includes("野生眉")) counts.brow++;
+                if(i.name.includes("濃黑養護-上睫毛")) counts.tintUp++;
+                if(i.name.includes("濃黑養護-下睫毛")) counts.tintLow++;
+            });
+
+            cart = cart.filter(i => i.type !== 'auto_discount');
+            if(counts.upper > 0 && counts.lower > 0) cart.push({ name: "加購下睫毛優惠", price: -200, type: 'auto_discount' });
+            if((counts.upper > 0 || counts.lower > 0) && counts.brow > 0) cart.push({ name: "耀眼組合優惠", price: -100, type: 'auto_discount' });
+            if(counts.tintUp > 0 && counts.tintLow > 0) cart.push({ name: "存在感Up優惠", price: -50, type: 'auto_discount' });
+        }
+
+        function hasHistory(client, keyword) {
+            if(!client.transactions) return false;
+            return client.transactions.some(t => t.item && t.item.includes(keyword));
+        }
+
+        window.updateCalculations = () => {
+            if(selectedPosClient) applyAutoDiscounts(); 
+            const list = document.getElementById('cartList'); list.innerHTML = '';
+            
+            let grossTotal = 0;
+            let fixedDeductions = 0;
+            let discountMultiplier = 1;
+
+            cart.forEach(i => {
+                if(i.type === 'discount') {
+                    discountMultiplier = i.val;
+                } else if(i.type === 'fixed_discount') {
+                    fixedDeductions += i.val;
+                } else {
+                    grossTotal += i.price;
+                }
+            });
+
+            // V36: Allow negative totals for expenses
+            let taxableBase = grossTotal - fixedDeductions; // Removed Math.max(0) to allow negative
+            let grandTotal = Math.round(taxableBase * discountMultiplier);
+            
+            document.getElementById('posTotal').innerText = `$${grandTotal}`;
+
+            cart.forEach((item, idx) => {
+                let priceDisplay = `$${item.price}`;
+                if(item.type==='discount') priceDisplay = `<span style="color:red">-${Math.round(taxableBase * (1-discountMultiplier))}</span>`;
+                else if(item.type==='fixed_discount') priceDisplay = `<span style="color:red">-$${item.val}</span>`;
+                else if(item.price < 0) priceDisplay = `<span style="color:var(--danger-color)">$${item.price}</span>`; // Expense red style
+                
+                let tag = item.appliedAuto ? `<span class="first-time-badge">${item.appliedAuto}</span>` : '';
+                let removeBtn = item.type !== 'auto_discount' ? `<span class="cart-remove" onclick="window.removeCart(${idx})">×</span>` : ''; 
+                list.innerHTML += `<div class="cart-item"><div>${item.name} ${tag}</div><span>${priceDisplay} ${removeBtn}</span></div>`;
+            });
+
+            if(cart.length===0) list.innerHTML = '<div style="text-align:center;color:#ccc;margin-top:50px;">尚未選擇項目</div>';
+
+            const useBal = document.getElementById('use_balance').checked;
+            const balance = selectedPosClient ? (selectedPosClient.balance || 0) : 0;
+            let deduct = 0;
+            if(useBal && grandTotal > 0) { // Only deduct if positive total
+                 deduct = Math.min(grandTotal, balance);
+            }
+            let remain = grandTotal - deduct;
+            
+            document.getElementById('deduct_display').innerText = `-$${deduct}`;
+            document.getElementById('remain_display').innerText = `$${remain}`;
+            
+            const payRow = document.getElementById('final_pay_method_row');
+            // If negative (payout), show method too (how we paid them)
+            payRow.style.display = 'flex'; 
+        }
+
+        window.removeCart = (idx) => { cart.splice(idx, 1); window.updateCalculations(); };
+        
+        window.submitCheckout = () => {
+            if(cart.length===0) return alert("購物車空的");
+            const name = document.getElementById('pos_client_name').value || "Walk-in";
+            
+            // Re-calc for submit
+            let grossTotal = 0, fixedDeductions = 0, discountMultiplier = 1, topupAmt = 0;
+            let courseItems = [];
+            let catSummary = {};
+
+            cart.forEach(i => {
+                if(i.type==='discount') discountMultiplier = i.val;
+                else if(i.type==='fixed_discount') fixedDeductions += i.val;
+                else {
+                    grossTotal += i.price;
+                    if(i.type==='topup_purchase') topupAmt += i.price;
+                    
+                    let cat = i.category || '其他';
+                    if(!catSummary[cat]) catSummary[cat] = 0;
+                    catSummary[cat] += i.price;
+
+                    if(!i.type && !i.name.includes("雨衣") && !i.name.includes("滋養液") && !i.name.includes("儲值") && !i.category?.includes('支出')) {
+                        courseItems.push(i.name);
+                    }
+                }
+            });
+            let taxableBase = grossTotal - fixedDeductions;
+            let grandTotal = Math.round(taxableBase * discountMultiplier);
+            
+            let categoryStr = Object.entries(catSummary).map(([k,v]) => `${k}($${v})`).join(" + ");
+
+            const useBal = document.getElementById('use_balance').checked;
+            const balance = selectedPosClient ? (selectedPosClient.balance || 0) : 0;
+            let deduct = 0;
+            if(useBal && grandTotal > 0) deduct = Math.min(grandTotal, balance);
+            let remain = grandTotal - deduct;
+            
+            const payMethod = remain > 0 ? document.getElementById('pos_method').value : (grandTotal < 0 ? "現金支出" : "儲值金全額");
+            const itemsName = cart.map(i => i.name).join("+");
+
+            if(topupAmt > 0 && useBal) return alert("購買儲值金時不可使用餘額扣款！");
+
+            const localDate = getLocalYMD(); 
+            
+            addDoc(collection(db, "pos_records"), {
+                date: localDate, 
+                timestamp: Date.now(), 
+                client: name, 
+                items: itemsName, 
+                category: categoryStr, 
+                total: grandTotal,
+                method: useBal ? `儲值$${deduct} + ${payMethod}$${remain}` : payMethod,
+                type: topupAmt > 0 ? 'topup' : 'service'
+            }).then(() => {
+                if(selectedPosClient) {
+                    let newBal = balance - deduct + topupAmt;
+                    const newTrans = {
+                        date: localDate, 
+                        item: itemsName, 
+                        amt: grandTotal,
+                        method: useBal ? `儲值扣$${deduct}/${payMethod}` : payMethod
+                    };
+                    
+                    let updates = {
+                        balance: newBal,
+                        transactions: arrayUnion(newTrans)
+                    };
+
+                    if(courseItems.length > 0) {
+                        const newSession = {
+                            date: localDate,
+                            items: courseItems,
+                            prePhotos: [], padPhotos: [], postPhotos: []
+                        };
+                        updates.sessions = arrayUnion(newSession);
+                    }
+
+                    updateDoc(doc(db, "clients", selectedPosClient.firebaseId), updates);
+                    alert(`結帳完成！\n資料已同步。\n餘額更新為：$${newBal}`);
+                } else {
+                    alert(`結帳完成！$${grandTotal} (已寫入帳務)`);
+                }
+                cart=[]; document.getElementById('pos_client_name').value=''; 
+                document.getElementById('posBalance').innerText='-';
+                document.getElementById('use_balance').checked=false;
+                selectedPosClient = null;
+                window.updateCalculations();
+            });
+        }
+
+        // --- Reports Logic ---
+        function getROCDate(d) {
+            const date = d ? new Date(d) : new Date();
+            return `${date.getFullYear()-1911}/${String(date.getMonth()+1).padStart(2,'0')}/${String(date.getDate()).padStart(2,'0')}`;
+        }
+        function updateClock() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
+            if(document.getElementById('receiptTime')) document.getElementById('receiptTime').innerText = `${getROCDate()} ${timeStr}`;
+        }
+
+        window.renderDailyReport = (specificDate) => {
+            if(unsubscribeDaily) unsubscribeDaily(); 
+            
+            const dateToQuery = specificDate || getLocalYMD(); 
+            
+            const displayDate = new Date(dateToQuery);
+            document.getElementById('dailyDate').innerText = `${displayDate.getFullYear()-1911}/${String(displayDate.getMonth()+1).padStart(2,'0')}/${String(displayDate.getDate()).padStart(2,'0')}`;
+            
+            const lockQuery = query(collection(db, "daily_closings"), where("date", "==", dateToQuery));
+            getDocs(lockQuery).then(snap => {
+                const isLocked = !snap.empty;
+                document.getElementById('lockMsg').style.display = isLocked ? 'inline' : 'none';
+                document.getElementById('closeDayBtn').style.display = isLocked ? 'none' : 'inline-block';
+                
+                const q = query(collection(db, "pos_records"), where("date", "==", dateToQuery));
+                
+                unsubscribeDaily = onSnapshot(q, (snapshot) => {
+                    const tbody = document.getElementById('dailyList'); tbody.innerHTML = '';
+                    let total = 0;
+                    
+                    let records = [];
+                    snapshot.forEach(doc => records.push({id: doc.id, ...doc.data()}));
+                    records.sort((a,b) => b.timestamp - a.timestamp);
+                    
+                    records.forEach(d => {
+                        total += d.total;
+                        const time = new Date(d.timestamp).toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit'});
+                        const displayItem = d.category || d.items; 
+                        const delBtn = isLocked ? '' : `<button class="delete-btn" onclick="window.deleteDailyRecord('${d.id}')">🗑️</button>`;
+                        // V36: Amount Color (Red for negative)
+                        const amtStyle = d.total < 0 ? 'color:var(--danger-color);font-weight:bold' : '';
+                        tbody.innerHTML += `<tr><td>${time}</td><td>${d.client}</td><td>${displayItem}</td><td style="${amtStyle}">$${d.total}</td><td>${d.method}</td><td>${delBtn}</td></tr>`;
+                    });
+                    document.getElementById('dailyTotal').innerText = `$${total}`;
+                });
+            });
+        }
+        
+        window.deleteDailyRecord = (id) => {
+            if(!confirm("確定刪除此筆結帳？(系統將同步刪除客戶消費/課程紀錄並還原餘額)")) return;
+            
+            getDocs(query(collection(db, "pos_records"), where("__name__", "==", id))).then(snap => {
+                if(!snap.empty) {
+                    const target = snap.docs[0].data();
+                    
+                    const client = clients.find(c => c.name === target.client);
+                    if(client) {
+                        let newBal = client.balance || 0;
+                        let isModified = false;
+                        
+                        // Revert logic
+                        if(target.method.includes("儲值扣")) {
+                            const match = target.method.match(/儲值扣\$(\d+)/);
+                            if(match) { newBal += parseInt(match[1]); isModified = true; }
+                        }
+                        // Handle Expense/Topup
+                        if(target.total < 0 && target.category.includes("支出")) {
+                            // Deleting an expense (negative) doesn't affect balance unless it was a refund TO balance?
+                            // Assuming expense was cash out. No balance change needed usually.
+                        }
+                        if(target.items.includes("儲值金") && target.total > 0) { // Revert topup
+                             // Simplistic: if positive total and has topup
+                             newBal -= target.total; isModified = true;
+                        }
+
+                        // Delete Transaction
+                        let newTrans = client.transactions ? [...client.transactions] : [];
+                        const transIdx = newTrans.findIndex(t => t.date === target.date && t.item === target.items && t.amt === target.total);
+                        if(transIdx > -1) { newTrans.splice(transIdx, 1); isModified = true; }
+                        
+                        // Delete Session
+                        let newSessions = client.sessions ? [...client.sessions] : [];
+                        const sessIdx = newSessions.findIndex(s => s.date.startsWith(target.date) && target.items.includes(s.items[0])); 
+                        if(sessIdx > -1) { newSessions.splice(sessIdx, 1); isModified = true; }
+                        
+                        if(isModified) {
+                            updateDoc(doc(db, "clients", client.firebaseId), { 
+                                balance: newBal, 
+                                transactions: newTrans, 
+                                sessions: newSessions 
+                            });
+                        }
+                    }
+                    deleteDoc(doc(db, "pos_records", id));
+                }
+            });
+        }
+
+        window.confirmDailyClose = () => {
+            const total = document.getElementById('dailyTotal').innerText;
+            if(confirm(`確認執行本日結帳？總金額 ${total}\n(注意：結帳後將無法刪除今日紀錄)`)) {
+                const today = getLocalYMD();
+                const amt = parseInt(total.replace('$',''));
+                addDoc(collection(db, "daily_closings"), { date: today, total: amt, status: 'closed' });
+                alert("已完成日結存檔！");
+            }
+        }
+
+        window.renderMonthlyReport = () => {
+            if(unsubscribeMonthly) unsubscribeMonthly();
+            const picker = document.getElementById('monthlyPicker').value; // 2026-01
+            const start = picker + "-01";
+            const end = picker + "-31";
+
+            const q = query(collection(db, "pos_records"), where("date", ">=", start), where("date", "<=", end));
+            
+            unsubscribeMonthly = onSnapshot(q, (snap) => {
+                const tbody = document.getElementById('monthlyList'); tbody.innerHTML = '';
+                const dailyData = {};
+                let monthTotal = 0;
+
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    if(!dailyData[d.date]) dailyData[d.date] = { total: 0, count: 0 };
+                    dailyData[d.date].total += d.total;
+                    dailyData[d.date].count += 1;
+                    monthTotal += d.total;
+                });
+
+                Object.keys(dailyData).sort().forEach(date => {
+                    tbody.innerHTML += `<tr onclick="window.goToDaily('${date}')" style="cursor:pointer" title="點擊查看當日明細"><td>${date}</td><td>${dailyData[date].count}單</td><td>$${dailyData[date].total}</td><td>-</td></tr>`;
+                });
+                document.getElementById('monthlyTotal').innerText = `$${monthTotal}`;
+            });
+        }
+
+        // --- CRM Functions ---
+        window.renderClientList=()=>{
+            const l=document.getElementById('clientList');
+            const f=document.getElementById('monthFilter').value;
+            l.innerHTML='';
+            clients.forEach(c=>{
+                let s=true;
+                if(f!=='all'){if(!c.birthday)s=false;else if(c.birthday.split('-')[1]!==f)s=false;}
+                if(s){
+                    const li=document.createElement('li');
+                    li.className=`client-item ${c.id===currentClientId?'active':''}`;
+                    li.innerHTML=`<span>${c.name}</span><small>$${c.balance||0}</small>`;
+                    li.addEventListener('click', () => {
+                        window.loadClient(c.id);
+                        document.querySelectorAll('.client-item').forEach(i=>i.classList.remove('active'));
+                        li.classList.add('active');
+                    });
+                    l.appendChild(li);
+                }
+            })
+        };
+        
+        window.loadClient=(id)=>{currentClientId=id;const c=clients.find(x=>x.id===id);document.getElementById('mainContainer').style.visibility='visible';
+            document.getElementById('p_name').value=c.name||'';document.getElementById('p_phone').value=c.phone||'';document.getElementById('p_birthday').value=c.birthday||'';document.getElementById('clientNotes').value=c.notes||'';
+            const sL=document.getElementById('sessionList');sL.innerHTML='';if(c.sessions)c.sessions.forEach((s,i)=>{let h=`<div style="background:#FFF0F5;border:1px solid #EAC8D0;margin-bottom:10px;padding:10px;border-radius:10px;"><div style="display:flex;justify-content:space-between;"><div><b>${s.date}</b><br>${s.items.join(', ')}</div><button style="background:var(--danger-color);color:white;border:none;padding:2px 8px;border-radius:5px;cursor:pointer;" onclick="window.deleteSession(${i})">🗑️</button></div><div class="photos-container">${renderPG(i,'prePhotos',s.prePhotos||[],'前')}${renderPG(i,'padPhotos',s.padPhotos||[],'墊片')}${renderPG(i,'postPhotos',s.postPhotos||[],'後')}</div></div>`;sL.innerHTML+=h;});
+            const bL=document.getElementById('billingList');bL.innerHTML='';if(c.transactions)c.transactions.forEach((t, i)=>{bL.innerHTML+=`<tr><td>${t.date}</td><td>${t.item}</td><td>$${t.amt}</td><td><button class="delete-btn" onclick="window.deleteTransaction(${i})">🗑️</button></td></tr>`;});
+            renderTags();
+        };
+        
+        function renderPG(i,k,p,l){let h=`<div class="photo-column"><div style="text-align:center;font-size:0.8rem;color:#C79AA5;">${l}</div><div class="photo-grid">`;p.forEach(u=>h+=`<div class="photo-box has-img" style="background-image:url(${u})"></div>`);if(p.length<3)h+=`<label class="photo-box">+<input type="file" style="display:none" accept="image/*" onchange="window.uploadPhoto(${i},'${k}',this)"></label>`;return h+'</div></div>';}
+        window.uploadPhoto=(i,k,inp)=>{if(inp.files[0]){const r=new FileReader();r.onload=e=>{const c=clients.find(x=>x.id===currentClientId);let ns=[...c.sessions];if(!ns[i][k])ns[i][k]=[];ns[i][k].push(e.target.result);updateDoc(doc(db,"clients",c.firebaseId),{sessions:ns});};r.readAsDataURL(inp.files[0]);}};
+        window.createNewClient=()=>{const n=prompt("姓名?");if(n)addDoc(collection(db,"clients"),{id:Date.now(),name:n,balance:0,birthday:"",sessions:[],transactions:[],notes:"",tags:[]})};
+        window.saveProfile=()=>{if(!currentClientId)return;const c=clients.find(x=>x.id===currentClientId);updateDoc(doc(db,"clients",c.firebaseId),{name:document.getElementById('p_name').value,phone:document.getElementById('p_phone').value,birthday:document.getElementById('p_birthday').value,notes:document.getElementById('clientNotes').value});};
+        window.debounceSaveProfile=()=>{clearTimeout(saveTimer);saveTimer=setTimeout(window.saveProfile,1000)};
+        window.saveSession=()=>{const c=clients.find(x=>x.id===currentClientId);const d=document.getElementById('sess_date').value.replace('T',' ');let i=[];if(document.getElementById('sess_upper').checked)i.push("上睫毛");if(document.getElementById('sess_lower').checked)i.push("下睫毛");if(document.getElementById('sess_brow').checked)i.push("野生眉");const ns={date:d,items:i,prePhotos:[],padPhotos:[],postPhotos:[]};updateDoc(doc(db,"clients",c.firebaseId),{sessions:[ns,...(c.sessions||[])]}).then(()=>window.closeModal('sessionModal'));};
+        
+        window.deleteSession = (idx) => {
+            if(confirm("確定要刪除此課程紀錄嗎？(照片也會一併刪除)")) {
+                const c = clients.find(x => x.id === currentClientId);
+                let newSessions = [...c.sessions];
+                newSessions.splice(idx, 1);
+                updateDoc(doc(db, "clients", c.firebaseId), { sessions: newSessions });
+            }
+        }
+
+        window.deleteTransaction = async (idx) => {
+            if(!confirm("確定刪除此紀錄？將視為退費，並同步刪除日結帳務。")) return;
+
+            const c = clients.find(x => x.id === currentClientId);
+            let newTrans = [...c.transactions];
+            const target = newTrans[idx];
+            let newBal = c.balance || 0;
+            let isModified = false;
+
+            if(target.method.includes("儲值扣")) { const match = target.method.match(/儲值扣\$(\d+)/); if(match) { newBal += parseInt(match[1]); isModified = true; } }
+            if(target.item && target.item.includes("儲值金")) { newBal -= target.amt; isModified = true; }
+            
+            newTrans.splice(idx, 1);
+            let updateData = { transactions: newTrans };
+            if(isModified) updateData.balance = newBal;
+            
+            // Delete matching session
+            let newSessions = c.sessions ? [...c.sessions] : [];
+            const sessIdx = newSessions.findIndex(s => s.date.startsWith(target.date) && s.items.join("+") === target.item);
+            if (sessIdx > -1) { newSessions.splice(sessIdx, 1); updateData.sessions = newSessions; }
+
+            await updateDoc(doc(db, "clients", c.firebaseId), updateData);
+
+            // Sync Delete from Daily (pos_records)
+            const q = query(collection(db, "pos_records"), 
+                where("date", "==", target.date), 
+                where("client", "==", c.name), 
+                where("total", "==", target.amt)
+            );
+            const snap = await getDocs(q);
+            snap.forEach(d => deleteDoc(doc(db, "pos_records", d.id)));
+        }
+
+        window.jumpToPosWithClient = () => {
+            const c = clients.find(x=>x.id===currentClientId);
+            if(!c) return;
+            window.goToPOS();
+            document.getElementById('pos_client_name').value = c.name;
+            window.checkPosClient(c.name);
+        }
+
+        window.toggleTag=(t)=>{const c=clients.find(x=>x.id===currentClientId);let ts=c.tags?[...c.tags]:[];const i=ts.indexOf(t);if(i>-1)ts.splice(i,1);else ts.push(t);updateDoc(doc(db,"clients",c.firebaseId),{tags:ts});};
+        window.addNewCustomTag=()=>{ const val=document.getElementById('new_tag_input').value; if(val){ window.toggleTag(val); document.getElementById('new_tag_input').value=''; } }
+        
+        function renderTags(){
+            const c=clients.find(x=>x.id===currentClientId);
+            document.querySelectorAll('.tag-chip').forEach(e=>{const t=e.getAttribute('data-tag');if(c.tags&&c.tags.includes(t))e.classList.add('active');else e.classList.remove('active');});
+            const container = document.getElementById('tagList');
+            document.querySelectorAll('.custom-chip').forEach(e => e.remove());
+            if(c.tags) { c.tags.forEach(t => { if(!document.querySelector(`.tag-chip[data-tag="${t}"]`)) {
+                const s=document.createElement('span'); s.className='tag-chip active custom-chip'; s.innerText=t; s.onclick=()=>window.toggleTag(t); container.appendChild(s);
+            }})}
+        }
+
+        window.switchTab=(id,e)=>{document.querySelectorAll('.tab-content').forEach(d=>d.style.display='none');document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.getElementById(id).style.display='flex';e.target.classList.add('active');};
+        window.openSessionModal=()=>document.getElementById('sessionModal').style.display='flex';
+        window.openBillingModal=()=>document.getElementById('billingModal').style.display='flex';
+        window.closeModal=(id)=>document.getElementById(id).style.display='none';
+        window.clearSignature = () => ctx.clearRect(0,0,canvas.width,canvas.height);
+        
+        let canvas, ctx, isDrawing=false;
+        window.onload = () => { 
+            canvas=document.getElementById('signature-pad'); 
+            if(canvas){
+                ctx=canvas.getContext('2d'); canvas.width=canvas.offsetWidth; canvas.height=canvas.offsetHeight;
+                const start=e=>{isDrawing=true;ctx.beginPath();ctx.moveTo((e.clientX||e.touches[0].clientX)-canvas.getBoundingClientRect().left, (e.clientY||e.touches[0].clientY)-canvas.getBoundingClientRect().top);}
+                const move=e=>{if(!isDrawing)return;ctx.lineTo((e.clientX||e.touches[0].clientX)-canvas.getBoundingClientRect().left, (e.clientY||e.touches[0].clientY)-canvas.getBoundingClientRect().top);ctx.stroke();}
+                const end=()=>isDrawing=false;
+                canvas.onmousedown=start; canvas.onmousemove=move; canvas.onmouseup=end; canvas.onmouseout=end;
+                canvas.ontouchstart=e=>{e.preventDefault();start(e)}; canvas.ontouchmove=e=>{e.preventDefault();move(e)}; canvas.ontouchend=end;
+            }
+            document.getElementById('sess_date').value = new Date().toISOString().slice(0,16); 
+        }
+
+    </script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bianca_eye.studio 管理系統 (V37 價格修正版)</title>
+    <title>Bianca_eye.studio 管理系統 (V38 模特價新增版)</title>
     <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
         /* --- 核心 CSS --- */
@@ -122,7 +122,7 @@
     <div id="login-overlay">
         <div class="login-box">
             <h2>Bianca<br>Eye Studio</h2>
-            <div style="font-size: 0.9rem; margin-bottom: 15px; color: var(--dark-pink);">✨ V37 價格修正版</div>
+            <div style="font-size: 0.9rem; margin-bottom: 15px; color: var(--dark-pink);">✨ V38 模特價新增版</div>
             <input type="email" id="login_email" class="login-input" placeholder="Firebase Email">
             <input type="password" id="login_pwd" class="login-input" placeholder="密碼">
             <button id="btnLogin" class="login-btn">登入系統</button>
@@ -187,7 +187,10 @@
 
             <div class="category-section" style="border-bottom:none;">
                 <div class="category-title">🎁 優惠 / 其他</div>
-                <div class="items-grid" id="pos_discounts"></div>
+                <div class="items-grid">
+                    <span id="pos_discounts" style="display:contents"></span>
+                    <div class="item-btn special" style="border-color:var(--blue-color);color:var(--blue-color);" onclick="window.addModelPrice()">模特價<br><small>輸入金額</small></div>
+                </div>
             </div>
         </div>
 
@@ -363,6 +366,7 @@
         let clients = [];
         let currentClientId = null;
         let unsubscribeDaily = null;
+        let unsubscribeMonthly = null;
 
         function startListeningDB() {
             onSnapshot(query(collection(db, "clients"), orderBy("id", "desc")), (snap) => {
@@ -419,6 +423,17 @@
             
             // Expense Logic: Negative Price, Category '支出'
             addToCart({ name: finalName, price: -Math.abs(parseInt(amt)), category: '支出', type: 'expense' });
+        }
+
+        // V38: Add Model Price
+        window.addModelPrice = () => {
+            let amt = prompt("請輸入模特價金額：");
+            if(!amt || isNaN(amt) || parseInt(amt) < 0) return alert("請輸入有效金額");
+            let note = prompt("請輸入備註 (例如: 項目名稱)：", "");
+            let finalName = "模特價";
+            if(note) finalName += `-${note}`;
+            // Categorize as '課程' so it counts as revenue and enables session recording
+            addToCart({ name: finalName, price: parseInt(amt), category: '課程' });
         }
 
         window.showTintModal = () => document.getElementById('tintModal').style.display='flex';
@@ -594,7 +609,7 @@
                     }
 
                     updateDoc(doc(db, "clients", selectedPosClient.firebaseId), updates);
-                    alert(`結帳完成！\n資料已同步。\n餘額更新為：$${newBal}`);
+                    alert(`結帳完成！\n資料已同步至客戶管理 (消費/課程)。\n餘額更新為：$${newBal}`);
                 } else {
                     alert(`結帳完成！$${grandTotal} (已寫入帳務)`);
                 }
@@ -712,22 +727,36 @@
                 const amt = parseInt(total.replace('$',''));
                 addDoc(collection(db, "daily_closings"), { date: today, total: amt, status: 'closed' });
                 alert("已完成日結存檔！");
-                renderDailyReport(); // Refresh to lock
+                window.renderDailyReport(); 
             }
         }
 
-        window.renderMonthlyReport = async () => {
-            const picker = document.getElementById('monthlyPicker').value;
-            const tbody = document.getElementById('monthlyList'); tbody.innerHTML = '';
-            const q = query(collection(db, "daily_closings"), where("date", ">=", `${picker}-01`), where("date", "<=", `${picker}-31`));
-            const snapshot = await getDocs(q);
-            let monthTotal = 0;
-            snapshot.forEach(doc => {
-                const d = doc.data();
-                monthTotal += d.total;
-                tbody.innerHTML += `<tr onclick="window.goToDaily('${d.date}')" style="cursor:pointer" title="點擊查看當日明細"><td>${d.date}</td><td>-</td><td>$${d.total}</td><td>已結帳</td></tr>`;
+        window.renderMonthlyReport = () => {
+            if(unsubscribeMonthly) unsubscribeMonthly();
+            const picker = document.getElementById('monthlyPicker').value; // 2026-01
+            const start = picker + "-01";
+            const end = picker + "-31";
+
+            const q = query(collection(db, "pos_records"), where("date", ">=", start), where("date", "<=", end));
+            
+            unsubscribeMonthly = onSnapshot(q, (snap) => {
+                const tbody = document.getElementById('monthlyList'); tbody.innerHTML = '';
+                const dailyData = {};
+                let monthTotal = 0;
+
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    if(!dailyData[d.date]) dailyData[d.date] = { total: 0, count: 0 };
+                    dailyData[d.date].total += d.total;
+                    dailyData[d.date].count += 1;
+                    monthTotal += d.total;
+                });
+
+                Object.keys(dailyData).sort().forEach(date => {
+                    tbody.innerHTML += `<tr onclick="window.goToDaily('${date}')" style="cursor:pointer" title="點擊查看當日明細"><td>${date}</td><td>${dailyData[date].count}單</td><td>$${dailyData[date].total}</td><td>-</td></tr>`;
+                });
+                document.getElementById('monthlyTotal').innerText = `$${monthTotal}`;
             });
-            document.getElementById('monthlyTotal').innerText = `$${monthTotal}`;
         }
 
         // --- CRM Functions ---
@@ -775,7 +804,6 @@
             }
         }
 
-        // V34: Updated deleteTransaction to sync delete from pos_records
         window.deleteTransaction = async (idx) => {
             if(!confirm("確定刪除此紀錄？將視為退費，並同步刪除日結帳務。")) return;
 
@@ -799,7 +827,7 @@
 
             await updateDoc(doc(db, "clients", c.firebaseId), updateData);
 
-            // Sync delete from Daily Report (pos_records)
+            // Sync Delete from Daily (pos_records)
             const q = query(collection(db, "pos_records"), 
                 where("date", "==", target.date), 
                 where("client", "==", c.name), 
@@ -807,15 +835,6 @@
             );
             const snap = await getDocs(q);
             snap.forEach(d => deleteDoc(doc(db, "pos_records", d.id)));
-        }
-        
-        window.deleteSession = (idx) => {
-            if(confirm("確定要刪除此課程紀錄嗎？(照片也會一併刪除)")) {
-                const c = clients.find(x => x.id === currentClientId);
-                let newSessions = [...c.sessions];
-                newSessions.splice(idx, 1);
-                updateDoc(doc(db, "clients", c.firebaseId), { sessions: newSessions });
-            }
         }
 
         window.jumpToPosWithClient = () => {

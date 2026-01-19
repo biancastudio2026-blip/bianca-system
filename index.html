@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bianca_eye.studio 管理系統 (V39 體驗價優化版)</title>
+    <title>Bianca_eye.studio 管理系統 (V40 模特價獨立版)</title>
     <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
         /* --- 核心 CSS --- */
@@ -122,7 +122,7 @@
     <div id="login-overlay">
         <div class="login-box">
             <h2>Bianca<br>Eye Studio</h2>
-            <div style="font-size: 0.9rem; margin-bottom: 15px; color: var(--dark-pink);">✨ V39 體驗價優化版</div>
+            <div style="font-size: 0.9rem; margin-bottom: 15px; color: var(--dark-pink);">✨ V40 模特價獨立版</div>
             <input type="email" id="login_email" class="login-input" placeholder="Firebase Email">
             <input type="password" id="login_pwd" class="login-input" placeholder="密碼">
             <button id="btnLogin" class="login-btn">登入系統</button>
@@ -451,22 +451,29 @@
             const hasUpper = hasHistory(selectedPosClient, "上睫毛");
             const hasBrow = hasHistory(selectedPosClient, "野生眉");
 
+            // Reset counts
+            const counts = { upper:0, lower:0, brow:0, tintUp:0, tintLow:0 };
+
             cart.forEach(item => {
                 item.appliedAuto = null; 
-                if(item.name === "上睫毛管理" && !hasUpper) { item.price = 699; item.appliedAuto = "首次體驗優惠"; }
+                // V40: Skip Model Price for Combo/Auto Discounts
+                if(item.name.includes("模特價")) return;
+
+                if(item.name.includes("上睫毛管理") && !hasUpper) { item.price = 699; item.appliedAuto = "首次體驗優惠"; }
                 if(item.name === "野生眉雕塑" && !hasBrow) { item.price = 699; item.appliedAuto = "首次體驗優惠"; }
+
+                // Count standard items for combos
+                if(item.name.includes("上睫毛管理")) counts.upper++;
+                if(item.name.includes("下睫毛管理")) counts.lower++;
+                if(item.name.includes("野生眉")) counts.brow++;
+                if(item.name.includes("濃黑養護-上睫毛")) counts.tintUp++;
+                if(item.name.includes("濃黑養護-下睫毛")) counts.tintLow++;
             });
 
-            const counts = { upper:0, lower:0, brow:0, tintUp:0, tintLow:0 };
-            cart.forEach(i => {
-                if(i.name.includes("上睫毛管理")) counts.upper++;
-                if(i.name.includes("下睫毛管理")) counts.lower++;
-                if(i.name.includes("野生眉")) counts.brow++;
-                if(i.name.includes("濃黑養護-上睫毛")) counts.tintUp++;
-                if(i.name.includes("濃黑養護-下睫毛")) counts.tintLow++;
-            });
-
+            // Filter existing auto discounts
             cart = cart.filter(i => i.type !== 'auto_discount');
+            
+            // Apply combos based on standard item counts
             if(counts.upper > 0 && counts.lower > 0) cart.push({ name: "加購下睫毛優惠", price: -200, type: 'auto_discount' });
             if((counts.upper > 0 || counts.lower > 0) && counts.brow > 0) cart.push({ name: "耀眼組合優惠", price: -100, type: 'auto_discount' });
             if(counts.tintUp > 0 && counts.tintLow > 0) cart.push({ name: "存在感Up優惠", price: -50, type: 'auto_discount' });
@@ -476,12 +483,8 @@
         function hasHistory(client, keyword) {
             if(!client.transactions) return false;
             return client.transactions.some(t => {
-                // Must contain the keyword (e.g., "上睫毛")
                 const hasKeyword = t.item && t.item.includes(keyword);
-                // Must NOT be a Model Price transaction
                 const isModel = t.item && t.item.includes("模特價");
-                
-                // Return true only if it has keyword AND is NOT a model price
                 return hasKeyword && !isModel;
             });
         }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bianca_eye.studio 管理系統 (V46 雙重篩選版)</title>
+    <title>Bianca_eye.studio 管理系統 (V47 簽名強化版)</title>
     <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
         /* --- 核心 CSS --- */
@@ -123,7 +123,8 @@
         .agree-label { align-items: flex-start; line-height: 1.5; margin-bottom: 12px; display:flex; gap:5px;}
         .agree-label input { margin-top: 5px; flex-shrink: 0; }
         input[type="checkbox"] { transform: scale(1.2); accent-color: var(--dark-pink); }
-        #signature-pad { border: 2px dashed var(--text-color); border-radius: 10px; background: #fff; width: 100%; height: 150px; }
+        /* V47: Canvas Optimization */
+        #signature-pad { border: 2px dashed var(--text-color); border-radius: 10px; background: #fff; width: 100%; height: 150px; cursor: crosshair; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { text-align: left; padding: 8px; border-bottom: 1px dashed var(--main-pink); }
         th { color: var(--dark-pink); background: #FFF0F5;}
@@ -134,7 +135,7 @@
     <div id="login-overlay">
         <div class="login-box">
             <h2>Bianca<br>Eye Studio</h2>
-            <div style="font-size: 0.9rem; margin-bottom: 15px; color: var(--dark-pink);">✨ V46 雙重篩選版</div>
+            <div style="font-size: 0.9rem; margin-bottom: 15px; color: var(--dark-pink);">✨ V47 簽名強化版</div>
             <input type="email" id="login_email" class="login-input" placeholder="Firebase Email">
             <input type="password" id="login_pwd" class="login-input" placeholder="密碼">
             <button id="btnLogin" class="login-btn">登入系統</button>
@@ -290,7 +291,6 @@
             </select>
             
             <ul class="client-list" id="clientList"></ul>
-            
             <div id="clientTotalCount" style="text-align:center; font-weight:bold; margin-top:10px; color:var(--dark-pink);">👥 列表人數：0 人</div>
         </div>
         
@@ -327,7 +327,10 @@
                             <label class="agree-label"><input type="checkbox" data-key="agree_3"> <span>我知道每個人完成後的感覺不同，取決於睫毛先天條件。</span></label>
                             <label class="agree-label" style="background:#FFF0F5; padding:5px; border-radius:5px;"><input type="checkbox" data-key="agree_4"> <span>我知道術後24小時內，需保持睫毛乾燥，避免夾睫毛、揉眼睛，以維持睫毛健康度、捲翹度。</span></label>
                             <label class="agree-label"><input type="checkbox" data-key="agree_5"> <span>我已閱讀並了解美睫後保養方式，及維護細項，了解美睫後睫毛保護與維護是我自己的責任。</span></label>
-                            <p style="margin-top:20px;">顧客簽名：</p><canvas id="signature-pad"></canvas><button type="button" class="add-btn" onclick="window.clearSignature()" style="margin-top:5px; font-size:0.9rem; padding:5px;">清除重簽</button></div></div>
+                            <p style="margin-top:20px;">顧客簽名：</p>
+                            <canvas id="signature-pad"></canvas>
+                            <button type="button" class="add-btn" onclick="window.clearSignature()" style="margin-top:5px; font-size:0.9rem; padding:5px;">清除重簽</button>
+                        </div></div>
                         <button type="button" class="btn-save" onclick="window.saveProfile()">💾 更新資料至雲端</button>
                     </div>
                 </div>
@@ -418,7 +421,7 @@
         let currentClientId = null;
         let unsubscribeDaily = null;
         let unsubscribeMonthly = null;
-        let saveTimer = null; // V41: Debounce timer variable
+        let saveTimer = null; 
 
         function startListeningDB() {
             onSnapshot(query(collection(db, "clients"), orderBy("id", "desc")), (snap) => {
@@ -744,20 +747,15 @@
                         }
                         // Handle Expense/Topup
                         if(target.total < 0 && target.category.includes("支出")) {
-                            // Deleting an expense (negative) doesn't affect balance unless it was a refund TO balance?
-                            // Assuming expense was cash out. No balance change needed usually.
                         }
-                        if(target.items.includes("儲值金") && target.total > 0) { // Revert topup
-                             // Simplistic: if positive total and has topup
+                        if(target.items.includes("儲值金") && target.total > 0) { 
                              newBal -= target.total; isModified = true;
                         }
 
-                        // Delete Transaction
                         let newTrans = client.transactions ? [...client.transactions] : [];
                         const transIdx = newTrans.findIndex(t => t.date === target.date && t.item === target.items && t.amt === target.total);
                         if(transIdx > -1) { newTrans.splice(transIdx, 1); isModified = true; }
                         
-                        // Delete Session
                         let newSessions = client.sessions ? [...client.sessions] : [];
                         const sessIdx = newSessions.findIndex(s => s.date.startsWith(target.date) && target.items.includes(s.items[0])); 
                         if(sessIdx > -1) { newSessions.splice(sessIdx, 1); isModified = true; }
@@ -814,31 +812,28 @@
             });
         }
 
-        // V46: Updated Filter Logic & Counter
         window.renderClientList=()=>{
             const l=document.getElementById('clientList');
             const mFilter = document.getElementById('monthFilter').value;
-            const rFilter = document.getElementById('regionFilter').value; // V46
+            const rFilter = document.getElementById('regionFilter').value; 
             
             l.innerHTML='';
-            let count = 0; // V46: Client Counter
+            let count = 0; 
 
             clients.forEach(c=>{
                 let show = true;
                 
-                // Month Filter
                 if(mFilter !== 'all'){
                     if(!c.birthday) show=false;
                     else if(c.birthday.split('-')[1]!==mFilter) show=false;
                 }
                 
-                // Region Filter (V46)
                 if(rFilter !== 'all') {
                     if((c.region || '') !== rFilter) show = false;
                 }
 
                 if(show){
-                    count++; // Increment
+                    count++; 
                     const li=document.createElement('li');
                     li.className=`client-item ${c.id===currentClientId?'active':''}`;
                     let birthdayIcon = '';
@@ -854,7 +849,6 @@
                     l.appendChild(li);
                 }
             })
-            // Update Count Display
             document.getElementById('clientTotalCount').innerText = `👥 列表人數：${count} 人`;
         };
         
@@ -869,7 +863,7 @@
             document.getElementById('p_name').value=c.name||'';
             document.getElementById('p_phone').value=c.phone||'';
             document.getElementById('p_birthday').value=c.birthday||'';
-            document.getElementById('p_region').value=c.region||''; // V45
+            document.getElementById('p_region').value=c.region||''; 
             document.getElementById('clientNotes').value=c.notes||'';
             
             if(c.profileData) {
@@ -879,14 +873,26 @@
                 }
             }
             if(c.friend_name) document.getElementById('p_friend_name').value = c.friend_name;
-            if(c.neighbor_unit) document.getElementById('p_neighbor_unit').value = c.neighbor_unit; // V45
+            if(c.neighbor_unit) document.getElementById('p_neighbor_unit').value = c.neighbor_unit;
             if(c.eye_disease) document.getElementById('p_disease').value = c.eye_disease;
             if(c.allergy_other) document.getElementById('p_allergy_other').value = c.allergy_other;
             if(c.experience) document.getElementById('p_exp').value = c.experience;
             if(c.habit) document.getElementById('p_habit').value = c.habit;
             
             attachAutoSave();
-            window.clearSignature();
+            
+            // V47: Signature Rendering Logic
+            const canvas = document.getElementById('signature-pad');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0,0,canvas.width,canvas.height); // Clear first
+            
+            if(c.signature) {
+                const img = new Image();
+                img.onload = () => {
+                    ctx.drawImage(img, 0, 0);
+                };
+                img.src = c.signature;
+            }
 
             const sL=document.getElementById('sessionList');sL.innerHTML='';
             if(c.sessions)c.sessions.forEach((s,i)=>{
@@ -910,9 +916,18 @@
             
             const canvas = document.getElementById('signature-pad');
             if(canvas) {
+                // Save signature on end of stroke
                 canvas.onmouseup = window.debounceSaveProfile;
                 canvas.ontouchend = window.debounceSaveProfile;
             }
+        }
+        
+        // V47: Signature Clearing
+        window.clearSignature = () => {
+            const canvas = document.getElementById('signature-pad');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            window.debounceSaveProfile(); // Save the cleared state
         }
         
         function renderPG(i,k,p,l){let h=`<div class="photo-column"><div style="text-align:center;font-size:0.8rem;color:#C79AA5;">${l}</div><div class="photo-grid">`;p.forEach(u=>h+=`<div class="photo-box has-img" style="background-image:url(${u})"></div>`);if(p.length<3)h+=`<label class="photo-box">+<input type="file" style="display:none" accept="image/*" onchange="window.uploadPhoto(${i},'${k}',this)"></label>`;return h+'</div></div>';}
@@ -923,7 +938,8 @@
             addDoc(collection(db,"clients"),{
                 id: newId,
                 name: "新客", 
-                balance:0, birthday:"", sessions:[], transactions:[], notes:"", tags:[], profileData:{}
+                balance:0, birthday:"", sessions:[], transactions:[], notes:"", tags:[], profileData:{},
+                signature: "" // Initialize empty signature
             }).then(() => {
                 window.pendingNewClientId = newId;
             });
@@ -938,19 +954,24 @@
                     profileData[el.dataset.key] = el.checked;
                 });
                 
+                // V47: Capture Signature Data
+                const canvas = document.getElementById('signature-pad');
+                const signatureData = canvas.toDataURL(); // Base64 image string
+
                 updateDoc(doc(db,"clients",c.firebaseId),{
                     name:document.getElementById('p_name').value,
                     phone:document.getElementById('p_phone').value,
                     birthday:document.getElementById('p_birthday').value,
-                    region: document.getElementById('p_region').value, // V45
+                    region: document.getElementById('p_region').value, 
                     notes:document.getElementById('clientNotes').value,
                     friend_name: document.getElementById('p_friend_name').value,
-                    neighbor_unit: document.getElementById('p_neighbor_unit').value, // V45
+                    neighbor_unit: document.getElementById('p_neighbor_unit').value,
                     eye_disease: document.getElementById('p_disease').value,
                     allergy_other: document.getElementById('p_allergy_other').value,
                     experience: document.getElementById('p_exp').value,
                     habit: document.getElementById('p_habit').value,
-                    profileData: profileData
+                    profileData: profileData,
+                    signature: signatureData // Save the signature
                 });
             }
         };
@@ -1027,18 +1048,49 @@
         window.openSessionModal=()=>document.getElementById('sessionModal').style.display='flex';
         window.openBillingModal=()=>document.getElementById('billingModal').style.display='flex';
         window.closeModal=(id)=>document.getElementById(id).style.display='none';
-        window.clearSignature = () => ctx.clearRect(0,0,canvas.width,canvas.height);
         
+        // V47: Ensure signature context is always ready
         let canvas, ctx, isDrawing=false;
         window.onload = () => { 
             canvas=document.getElementById('signature-pad'); 
             if(canvas){
-                ctx=canvas.getContext('2d'); canvas.width=canvas.offsetWidth; canvas.height=canvas.offsetHeight;
-                const start=e=>{isDrawing=true;ctx.beginPath();ctx.moveTo((e.clientX||e.touches[0].clientX)-canvas.getBoundingClientRect().left, (e.clientY||e.touches[0].clientY)-canvas.getBoundingClientRect().top);}
-                const move=e=>{if(!isDrawing)return;ctx.lineTo((e.clientX||e.touches[0].clientX)-canvas.getBoundingClientRect().left, (e.clientY||e.touches[0].clientY)-canvas.getBoundingClientRect().top);ctx.stroke();}
-                const end=()=>isDrawing=false;
+                ctx=canvas.getContext('2d'); 
+                // Fix canvas scaling for high DPI (basic version here, just matching CSS size)
+                canvas.width=canvas.offsetWidth; 
+                canvas.height=canvas.offsetHeight;
+                
+                // Style for signature pen
+                ctx.strokeStyle = "#000";
+                ctx.lineWidth = 2;
+                ctx.lineCap = "round";
+
+                const start=e=>{
+                    isDrawing=true;
+                    ctx.beginPath();
+                    // Handle scrolling offset more robustly if needed, but basic clientX is ok for fixed overlay/modal
+                    const rect = canvas.getBoundingClientRect();
+                    const x = (e.clientX||e.touches[0].clientX) - rect.left;
+                    const y = (e.clientY||e.touches[0].clientY) - rect.top;
+                    ctx.moveTo(x, y);
+                }
+                const move=e=>{
+                    if(!isDrawing)return;
+                    e.preventDefault(); // Stop scrolling when signing
+                    const rect = canvas.getBoundingClientRect();
+                    const x = (e.clientX||e.touches[0].clientX) - rect.left;
+                    const y = (e.clientY||e.touches[0].clientY) - rect.top;
+                    ctx.lineTo(x, y);
+                    ctx.stroke();
+                }
+                const end=()=>{
+                    if(isDrawing){
+                        isDrawing=false;
+                        // Auto-save happens here via onmouseup/ontouchend listener in attachAutoSave
+                    }
+                }
+                
                 canvas.onmousedown=start; canvas.onmousemove=move; canvas.onmouseup=end; canvas.onmouseout=end;
-                canvas.ontouchstart=e=>{e.preventDefault();start(e)}; canvas.ontouchmove=e=>{e.preventDefault();move(e)}; canvas.ontouchend=end;
+                canvas.ontouchstart=start; canvas.ontouchmove=move; canvas.ontouchend=end;
             }
             document.getElementById('sess_date').value = new Date().toISOString().slice(0,16); 
         }

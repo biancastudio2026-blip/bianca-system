@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bianca_eye.studio 管理系統 (V43 結帳修復版)</title>
+    <title>Bianca_eye.studio 管理系統 (V46 雙重篩選版)</title>
     <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
         /* --- 核心 CSS --- */
@@ -72,10 +72,22 @@
         .report-footer { margin-top: 20px; font-size: 1.5rem; font-weight: bold; text-align: right; color: var(--dark-pink); border-top: 2px solid var(--text-color); padding-top: 10px;}
 
         /* CRM 客戶管理 */
-        .sidebar { width: 250px; background: var(--card-bg); border: 2px solid var(--text-color); border-radius: 15px 255px 15px 25px / 255px 15px 225px 15px; padding: 20px; box-shadow: var(--shadow); display: flex; flex-direction: column; height: 100%; box-sizing: border-box; }
+        #crm-view { position: relative; } 
+        .sidebar { 
+            width: 250px; background: var(--card-bg); border: 2px solid var(--text-color); border-radius: 15px 255px 15px 25px / 255px 15px 225px 15px; padding: 20px; 
+            box-shadow: var(--shadow); display: flex; flex-direction: column; height: 100%; box-sizing: border-box; 
+            transition: all 0.3s ease; overflow: hidden; opacity: 1;
+        }
+        .sidebar.closed { width: 0; padding: 0; border: none; opacity: 0; margin-right: 0; }
+        
+        .toggle-side-btn {
+            position: absolute; top: 10px; left: 10px; z-index: 100;
+            background: var(--dark-pink); color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;
+        }
+
         .main-container { flex-grow: 1; display: flex; flex-direction: column; height: 100%; overflow: hidden; }
         .client-list { list-style: none; padding: 0; overflow-y: auto; flex-grow: 1; }
-        .client-item { padding: 10px; border-bottom: 1px dashed var(--main-pink); cursor: pointer; font-size: 1.2rem; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
+        .client-item { padding: 10px; border-bottom: 1px dashed var(--main-pink); cursor: pointer; font-size: 1.2rem; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; white-space: nowrap;}
         .client-item.active { background-color: #FFF0F5; font-weight: bold; border-left: 5px solid var(--dark-pink); }
         .content-card { background: var(--card-bg); border: 2px solid var(--text-color); border-radius: 0 15px 15px 15px; box-shadow: var(--shadow); padding: 20px; flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; z-index: 5; }
         
@@ -122,7 +134,7 @@
     <div id="login-overlay">
         <div class="login-box">
             <h2>Bianca<br>Eye Studio</h2>
-            <div style="font-size: 0.9rem; margin-bottom: 15px; color: var(--dark-pink);">✨ V43 結帳修復版</div>
+            <div style="font-size: 0.9rem; margin-bottom: 15px; color: var(--dark-pink);">✨ V46 雙重篩選版</div>
             <input type="email" id="login_email" class="login-input" placeholder="Firebase Email">
             <input type="password" id="login_pwd" class="login-input" placeholder="密碼">
             <button id="btnLogin" class="login-btn">登入系統</button>
@@ -261,14 +273,27 @@
     </div>
 
     <div id="crm-view" class="full-view">
-        <div class="sidebar">
-            <div style="text-align:center; margin-bottom:10px;"><button class="back-home-btn" onclick="window.goToDashboard()">🏠 回首頁</button></div>
+        <button class="toggle-side-btn" onclick="window.toggleSidebar()">☰</button>
+        
+        <div class="sidebar" id="crmSidebar">
+            <div style="text-align:center; margin-bottom:10px; margin-top:25px;"><button class="back-home-btn" onclick="window.goToDashboard()">🏠 回首頁</button></div>
             <button class="add-btn" onclick="window.createNewClient()">+ 新增顧客</button>
+            
+            <select id="regionFilter" style="width:100%; margin-bottom:5px;" onchange="window.renderClientList()">
+                <option value="all">📍 所有地區</option>
+                <option value="新竹">新竹</option>
+                <option value="淡水">淡水</option>
+            </select>
+
             <select id="monthFilter" style="width:100%; margin-bottom:10px;" onchange="window.renderClientList()">
                 <option value="all">📅 所有壽星</option><option value="01">1月</option><option value="02">2月</option><option value="03">3月</option><option value="04">4月</option><option value="05">5月</option><option value="06">6月</option><option value="07">7月</option><option value="08">8月</option><option value="09">9月</option><option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
             </select>
+            
             <ul class="client-list" id="clientList"></ul>
+            
+            <div id="clientTotalCount" style="text-align:center; font-weight:bold; margin-top:10px; color:var(--dark-pink);">👥 列表人數：0 人</div>
         </div>
+        
         <div class="main-container" id="mainContainer">
             <div class="tabs-header">
                 <button class="tab-btn active" onclick="window.switchTab('profile', event)">📋 個人資料</button>
@@ -279,7 +304,22 @@
             <div class="content-card">
                 <div id="profile" class="tab-content active">
                     <div class="scroll-container">
-                        <div class="form-section"><div class="form-header">基本資料</div><div class="form-body"><div class="form-row"><label>姓名：<input type="text" id="p_name" oninput="window.debounceSaveProfile()"></label><label>電話：<input type="text" id="p_phone" oninput="window.debounceSaveProfile()"></label></div><div class="form-row"><label>生日：<input type="date" id="p_birthday" onchange="window.saveProfile()"></label></div><div class="form-row"><label style="align-self: flex-start; margin-top: 5px;">從哪認識 Bianca：</label><div class="checkbox-group" style="display:flex; flex-direction:column; gap:5px;"><label><input type="checkbox" data-key="source_ig"> Instagram</label><label><input type="checkbox" data-key="source_threads"> Threads</label><label><input type="checkbox" data-key="source_fb"> Facebook</label><label><input type="checkbox" data-key="source_friend"> 朋友介紹 <input type="text" class="inline-input" id="p_friend_name" placeholder="朋友姓名" oninput="window.debounceSaveProfile()"></label></div></div></div></div>
+                        <div class="form-section"><div class="form-header">基本資料</div><div class="form-body">
+                            <div class="form-row"><label>姓名：<input type="text" id="p_name" oninput="window.debounceSaveProfile()"></label><label>電話：<input type="text" id="p_phone" oninput="window.debounceSaveProfile()"></label></div>
+                            <div class="form-row">
+                                <label>生日：<input type="date" id="p_birthday" onchange="window.saveProfile()"></label>
+                                <label style="margin-left:10px;">地區：
+                                    <select id="p_region" onchange="window.saveProfile()">
+                                        <option value="">請選擇</option>
+                                        <option value="新竹">新竹</option>
+                                        <option value="淡水">淡水</option>
+                                    </select>
+                                </label>
+                            </div>
+                            <div class="form-row"><label style="align-self: flex-start; margin-top: 5px;">從哪認識 Bianca：</label><div class="checkbox-group" style="display:flex; flex-direction:column; gap:5px;"><label><input type="checkbox" data-key="source_ig"> Instagram</label><label><input type="checkbox" data-key="source_threads"> Threads</label><label><input type="checkbox" data-key="source_fb"> Facebook</label><label><input type="checkbox" data-key="source_friend"> 朋友介紹 <input type="text" class="inline-input" id="p_friend_name" placeholder="朋友姓名" oninput="window.debounceSaveProfile()"></label>
+                            <label><input type="checkbox" data-key="source_neighbor"> 社區鄰居 <input type="text" class="inline-input" id="p_neighbor_unit" placeholder="戶號 (如11F-3)" oninput="window.debounceSaveProfile()"></label>
+                            </div></div>
+                        </div></div>
                         <div class="form-section"><div class="form-header">眼部狀況 & 習慣</div><div class="form-body"><div class="form-row"><label>睫毛狀況：</label><div class="checkbox-group"><label><input type="checkbox" data-key="lash_short"> 短</label><label><input type="checkbox" data-key="lash_med"> 中</label><label><input type="checkbox" data-key="lash_long"> 長</label><label><input type="checkbox" data-key="lash_thick"> 濃</label><label><input type="checkbox" data-key="lash_thin"> 稀疏</label></div></div><div class="form-row"><label>眼型：</label><div class="checkbox-group"><label><input type="checkbox" data-key="eye_size"> 大小眼</label><label><input type="checkbox" data-key="eye_single"> 單眼皮</label><label><input type="checkbox" data-key="eye_inner"> 內雙</label><label><input type="checkbox" data-key="eye_double"> 雙眼皮</label><label><input type="checkbox" data-key="eye_puffy"> 泡泡眼</label><label><input type="checkbox" data-key="eye_down"> 睫毛下垂</label><label><input type="checkbox" data-key="eye_inverse"> 睫毛倒插</label></div></div><div class="form-row"><label>眼睛疾病：<input type="text" id="p_disease" placeholder="無 / 有，請說明" oninput="window.debounceSaveProfile()"></label></div><div class="form-row"><label>是否懷孕：<input type="checkbox" data-key="preg_no"> 無 <input type="checkbox" data-key="preg_yes"> 有</label></div><div class="form-row"><label>是否過敏：<input type="checkbox" data-key="allergy_no"> 無 <input type="checkbox" data-key="allergy_dye"> 染髮 <input type="checkbox" data-key="allergy_latex"> 乳膠 其他 <input type="text" id="p_allergy_other" style="width:100px" oninput="window.debounceSaveProfile()"></label></div><div class="form-row"><label>有無操作過：<input type="text" id="p_exp" placeholder="無 / 有，大約幾次" oninput="window.debounceSaveProfile()"></label></div><div class="form-row"><label>保養習慣：<input type="text" id="p_habit" placeholder="無 / 有，使用產品" oninput="window.debounceSaveProfile()"></label></div><div class="form-row"><label>上妝習慣：<input type="checkbox" data-key="makeup_light"> 淡妝 <input type="checkbox" data-key="makeup_heavy"> 濃妝 <input type="checkbox" data-key="makeup_eye"> 著重眼妝</label></div></div></div>
                         <div class="form-section"><div class="form-header">同意書 & 簽名</div><div class="form-body">
                             <label class="agree-label"><input type="checkbox" data-key="agree_1"> <span>我知道本身有任何過敏或眼睛不適現象，我將事先告知服務人員，並了解由於每個人體質不同，自知悉店家服務所使用之產品均經過合格認證，且服務人員均經過合格技術鑑定，若因個人體質關係或衛生問題產生不適現象，服務店家可享有免責權。</span></label>
@@ -356,6 +396,11 @@
             return (parseInt(m) === today.getMonth() + 1) && (parseInt(d) === today.getDate());
         }
 
+        // V45: Sidebar Toggle
+        window.toggleSidebar = () => {
+            document.getElementById('crmSidebar').classList.toggle('closed');
+        }
+
         // --- POS Logic ---
         let defaultMenu = {
             courses: [{ name: "上睫毛管理", price: 999 }, { name: "下睫毛管理", price: 500 }, { name: "野生眉雕塑", price: 999 }],
@@ -380,7 +425,16 @@
                 clients = snap.docs.map(d => ({ firebaseId: d.id, ...d.data() }));
                 window.renderClientList();
                 renderClientDatalist();
-                if(currentClientId) window.loadClient(currentClientId);
+                if(window.pendingNewClientId) {
+                    const newClient = clients.find(c => c.id === window.pendingNewClientId);
+                    if(newClient) {
+                        window.loadClient(newClient.id);
+                        window.pendingNewClientId = null; 
+                        setTimeout(() => document.getElementById('p_name').focus(), 100);
+                    }
+                } else if(currentClientId) {
+                     window.loadClient(currentClientId);
+                }
             });
         }
 
@@ -457,7 +511,6 @@
 
             cart.forEach(item => {
                 item.appliedAuto = null; 
-                // V40: Skip Model Price for auto calculation
                 if(item.name.includes("模特價")) return;
 
                 if(item.name.includes("上睫毛管理") && !hasUpper) { item.price = 699; item.appliedAuto = "首次體驗優惠"; }
@@ -467,7 +520,7 @@
                 if(item.name.includes("下睫毛管理")) counts.lower++;
                 if(item.name.includes("野生眉")) counts.brow++;
                 if(item.name.includes("濃黑養護-上睫毛")) counts.tintUp++;
-                if(item.name.includes("濃黑養護-下睫毛")) counts.tintLow++; // V43 Fix: changed i.name to item.name
+                if(item.name.includes("濃黑養護-下睫毛")) counts.tintLow++; 
             });
 
             cart = cart.filter(i => i.type !== 'auto_discount');
@@ -476,7 +529,6 @@
             if(counts.tintUp > 0 && counts.tintLow > 0) cart.push({ name: "存在感Up優惠", price: -50, type: 'auto_discount' });
         }
 
-        // V39: Logic Update - Ignore "Model Price" transactions in history check
         function hasHistory(client, keyword) {
             if(!client.transactions) return false;
             return client.transactions.some(t => {
@@ -504,8 +556,7 @@
                 }
             });
 
-            // V36: Allow negative totals for expenses
-            let taxableBase = grossTotal - fixedDeductions; // Removed Math.max(0) to allow negative
+            let taxableBase = grossTotal - fixedDeductions;
             let grandTotal = Math.round(taxableBase * discountMultiplier);
             
             document.getElementById('posTotal').innerText = `$${grandTotal}`;
@@ -514,7 +565,7 @@
                 let priceDisplay = `$${item.price}`;
                 if(item.type==='discount') priceDisplay = `<span style="color:red">-${Math.round(taxableBase * (1-discountMultiplier))}</span>`;
                 else if(item.type==='fixed_discount') priceDisplay = `<span style="color:red">-$${item.val}</span>`;
-                else if(item.price < 0) priceDisplay = `<span style="color:var(--danger-color)">$${item.price}</span>`; // Expense red style
+                else if(item.price < 0) priceDisplay = `<span style="color:var(--danger-color)">$${item.price}</span>`;
                 
                 let tag = item.appliedAuto ? `<span class="first-time-badge">${item.appliedAuto}</span>` : '';
                 let removeBtn = item.type !== 'auto_discount' ? `<span class="cart-remove" onclick="window.removeCart(${idx})">×</span>` : ''; 
@@ -544,7 +595,6 @@
             if(cart.length===0) return alert("購物車空的");
             const name = document.getElementById('pos_client_name').value || "Walk-in";
             
-            // Re-calc for submit
             let grossTotal = 0, fixedDeductions = 0, discountMultiplier = 1, topupAmt = 0;
             let courseItems = [];
             let catSummary = {};
@@ -764,14 +814,31 @@
             });
         }
 
+        // V46: Updated Filter Logic & Counter
         window.renderClientList=()=>{
             const l=document.getElementById('clientList');
-            const f=document.getElementById('monthFilter').value;
+            const mFilter = document.getElementById('monthFilter').value;
+            const rFilter = document.getElementById('regionFilter').value; // V46
+            
             l.innerHTML='';
+            let count = 0; // V46: Client Counter
+
             clients.forEach(c=>{
-                let s=true;
-                if(f!=='all'){if(!c.birthday)s=false;else if(c.birthday.split('-')[1]!==f)s=false;}
-                if(s){
+                let show = true;
+                
+                // Month Filter
+                if(mFilter !== 'all'){
+                    if(!c.birthday) show=false;
+                    else if(c.birthday.split('-')[1]!==mFilter) show=false;
+                }
+                
+                // Region Filter (V46)
+                if(rFilter !== 'all') {
+                    if((c.region || '') !== rFilter) show = false;
+                }
+
+                if(show){
+                    count++; // Increment
                     const li=document.createElement('li');
                     li.className=`client-item ${c.id===currentClientId?'active':''}`;
                     let birthdayIcon = '';
@@ -787,6 +854,8 @@
                     l.appendChild(li);
                 }
             })
+            // Update Count Display
+            document.getElementById('clientTotalCount').innerText = `👥 列表人數：${count} 人`;
         };
         
         window.loadClient=(id)=>{
@@ -795,36 +864,28 @@
             const c=clients.find(x=>x.id===id);
             document.getElementById('mainContainer').style.visibility='visible';
             
-            // V42: Clear all checkboxes first
             document.querySelectorAll('input[type="checkbox"]').forEach(el => el.checked = false);
             
-            // Set simple fields
             document.getElementById('p_name').value=c.name||'';
             document.getElementById('p_phone').value=c.phone||'';
             document.getElementById('p_birthday').value=c.birthday||'';
+            document.getElementById('p_region').value=c.region||''; // V45
             document.getElementById('clientNotes').value=c.notes||'';
-            // V42: Ensure these fields exist in HTML if they are part of data model, or handled via checkbox/text inputs
-            // The provided HTML only has basic fields + checkboxes. Let's map profileData carefully.
             
-            // Set checkboxes based on profileData
             if(c.profileData) {
                 for (const [key, val] of Object.entries(c.profileData)) {
                     const el = document.querySelector(`input[data-key="${key}"]`);
                     if(el) el.checked = val;
                 }
             }
-            // Handle text inputs inside checkboxes like friend name, others
-            // Note: In HTML above, some inputs like 'p_friend_name' are explicit.
             if(c.friend_name) document.getElementById('p_friend_name').value = c.friend_name;
+            if(c.neighbor_unit) document.getElementById('p_neighbor_unit').value = c.neighbor_unit; // V45
             if(c.eye_disease) document.getElementById('p_disease').value = c.eye_disease;
             if(c.allergy_other) document.getElementById('p_allergy_other').value = c.allergy_other;
             if(c.experience) document.getElementById('p_exp').value = c.experience;
             if(c.habit) document.getElementById('p_habit').value = c.habit;
             
-            // Attach Auto-Save listeners to everything
             attachAutoSave();
-            
-            // Clear signature pad
             window.clearSignature();
 
             const sL=document.getElementById('sessionList');sL.innerHTML='';
@@ -856,13 +917,22 @@
         
         function renderPG(i,k,p,l){let h=`<div class="photo-column"><div style="text-align:center;font-size:0.8rem;color:#C79AA5;">${l}</div><div class="photo-grid">`;p.forEach(u=>h+=`<div class="photo-box has-img" style="background-image:url(${u})"></div>`);if(p.length<3)h+=`<label class="photo-box">+<input type="file" style="display:none" accept="image/*" onchange="window.uploadPhoto(${i},'${k}',this)"></label>`;return h+'</div></div>';}
         window.uploadPhoto=(i,k,inp)=>{if(inp.files[0]){const r=new FileReader();r.onload=e=>{const c=clients.find(x=>x.id===currentClientId);let ns=[...c.sessions];if(!ns[i][k])ns[i][k]=[];ns[i][k].push(e.target.result);updateDoc(doc(db,"clients",c.firebaseId),{sessions:ns});};r.readAsDataURL(inp.files[0]);}};
-        window.createNewClient=()=>{const n=prompt("姓名?");if(n)addDoc(collection(db,"clients"),{id:Date.now(),name:n,balance:0,birthday:"",sessions:[],transactions:[],notes:"",tags:[], profileData:{}})};
+        
+        window.createNewClient=()=>{
+            const newId = Date.now();
+            addDoc(collection(db,"clients"),{
+                id: newId,
+                name: "新客", 
+                balance:0, birthday:"", sessions:[], transactions:[], notes:"", tags:[], profileData:{}
+            }).then(() => {
+                window.pendingNewClientId = newId;
+            });
+        };
         
         window.saveProfile=()=>{
             if(!currentClientId) return;
             const c=clients.find(x=>x.id===currentClientId);
             if(c) {
-                // Collect all checkbox states
                 const profileData = {};
                 document.querySelectorAll('input[type="checkbox"][data-key]').forEach(el => {
                     profileData[el.dataset.key] = el.checked;
@@ -872,9 +942,10 @@
                     name:document.getElementById('p_name').value,
                     phone:document.getElementById('p_phone').value,
                     birthday:document.getElementById('p_birthday').value,
+                    region: document.getElementById('p_region').value, // V45
                     notes:document.getElementById('clientNotes').value,
-                    // Collect explicit text inputs
                     friend_name: document.getElementById('p_friend_name').value,
+                    neighbor_unit: document.getElementById('p_neighbor_unit').value, // V45
                     eye_disease: document.getElementById('p_disease').value,
                     allergy_other: document.getElementById('p_allergy_other').value,
                     experience: document.getElementById('p_exp').value,

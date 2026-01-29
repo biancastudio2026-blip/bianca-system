@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bianca_eye.studio 管理系統 (V50 課程墊片文字版)</title>
+    <title>Bianca_eye.studio 管理系統 (V51 圖片壓縮版)</title>
     <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
         /* --- 核心 CSS --- */
@@ -116,10 +116,9 @@
         .photos-container { display: flex; gap: 10px; margin-top: 10px; }
         .photo-column { flex: 1; background: #fff; padding: 10px; border-radius: 10px; border: 1px dashed var(--main-pink); }
         .photo-grid { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; }
-        .photo-box { width: 60px; height: 60px; border: 2px dashed #ccc; display: flex; align-items: center; justify-content: center; background-size: cover; cursor: pointer; border-radius: 8px; }
+        .photo-box { width: 60px; height: 60px; border: 2px dashed #ccc; display: flex; align-items: center; justify-content: center; background-size: cover; cursor: pointer; border-radius: 8px; position:relative;}
         .photo-box.has-img { border: 2px solid var(--dark-pink); cursor: default; }
         
-        /* V50: Pad Text Area */
         .pad-input { width: 100%; height: 60px; border: 2px dashed #ccc; border-radius: 8px; padding: 5px; resize: none; font-family: inherit; font-size: 0.9rem; box-sizing: border-box; }
         .pad-input:focus { border-color: var(--dark-pink); outline:none; }
 
@@ -141,6 +140,10 @@
         #signature-placeholder { color: var(--dark-pink); font-weight: bold; }
         #signature-pad { border: 2px dashed var(--text-color); border-radius: 10px; background: #fff; width: 100%; height: 150px; cursor: crosshair; touch-action: none; }
         
+        /* Spinner */
+        .loading-spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--dark-pink); border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; position:absolute; display:none;}
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { text-align: left; padding: 8px; border-bottom: 1px dashed var(--main-pink); }
         th { color: var(--dark-pink); background: #FFF0F5;}
@@ -151,7 +154,7 @@
     <div id="login-overlay">
         <div class="login-box">
             <h2>Bianca<br>Eye Studio</h2>
-            <div style="font-size: 0.9rem; margin-bottom: 15px; color: var(--dark-pink);">✨ V50 課程墊片文字版</div>
+            <div style="font-size: 0.9rem; margin-bottom: 15px; color: var(--dark-pink);">✨ V51 圖片壓縮版</div>
             <input type="email" id="login_email" class="login-input" placeholder="Firebase Email">
             <input type="password" id="login_pwd" class="login-input" placeholder="密碼">
             <button id="btnLogin" class="login-btn">登入系統</button>
@@ -813,6 +816,9 @@
                             const match = target.method.match(/儲值扣\$(\d+)/);
                             if(match) { newBal += parseInt(match[1]); isModified = true; }
                         }
+                        // Handle Expense/Topup
+                        if(target.total < 0 && target.category.includes("支出")) {
+                        }
                         if(target.items.includes("儲值金") && target.total > 0) { 
                              newBal -= target.total; isModified = true;
                         }
@@ -877,31 +883,14 @@
             });
         }
 
-        // V46: Updated Filter Logic & Counter
         window.renderClientList=()=>{
             const l=document.getElementById('clientList');
-            const mFilter = document.getElementById('monthFilter').value;
-            const rFilter = document.getElementById('regionFilter').value; // V46
-            
+            const f=document.getElementById('monthFilter').value;
             l.innerHTML='';
-            let count = 0; // V46: Client Counter
-
             clients.forEach(c=>{
-                let show = true;
-                
-                // Month Filter
-                if(mFilter !== 'all'){
-                    if(!c.birthday) show=false;
-                    else if(c.birthday.split('-')[1]!==mFilter) show=false;
-                }
-                
-                // Region Filter (V46)
-                if(rFilter !== 'all') {
-                    if((c.region || '') !== rFilter) show = false;
-                }
-
-                if(show){
-                    count++; // Increment
+                let s=true;
+                if(f!=='all'){if(!c.birthday)s=false;else if(c.birthday.split('-')[1]!==f)s=false;}
+                if(s){
                     const li=document.createElement('li');
                     li.className=`client-item ${c.id===currentClientId?'active':''}`;
                     let birthdayIcon = '';
@@ -917,8 +906,6 @@
                     l.appendChild(li);
                 }
             })
-            // Update Count Display
-            document.getElementById('clientTotalCount').innerText = `👥 列表人數：${count} 人`;
         };
         
         window.loadClient=(id)=>{
@@ -932,7 +919,7 @@
             document.getElementById('p_name').value=c.name||'';
             document.getElementById('p_phone').value=c.phone||'';
             document.getElementById('p_birthday').value=c.birthday||'';
-            document.getElementById('p_region').value=c.region||''; // V45
+            document.getElementById('p_region').value=c.region||''; 
             document.getElementById('clientNotes').value=c.notes||'';
             
             if(c.profileData) {
@@ -942,7 +929,7 @@
                 }
             }
             if(c.friend_name) document.getElementById('p_friend_name').value = c.friend_name;
-            if(c.neighbor_unit) document.getElementById('p_neighbor_unit').value = c.neighbor_unit; // V45
+            if(c.neighbor_unit) document.getElementById('p_neighbor_unit').value = c.neighbor_unit;
             if(c.eye_disease) document.getElementById('p_disease').value = c.eye_disease;
             if(c.allergy_other) document.getElementById('p_allergy_other').value = c.allergy_other;
             if(c.experience) document.getElementById('p_exp').value = c.experience;
@@ -1073,8 +1060,40 @@
         // V47: Clears old small canvas logic references if any remain (Safety)
         window.clearSignature = () => {} 
         
+        // V51: Compression Function
+        function compressImage(file) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.src = URL.createObjectURL(file);
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 800; 
+                    const scaleSize = MAX_WIDTH / img.width;
+                    canvas.width = MAX_WIDTH;
+                    canvas.height = img.height * scaleSize;
+                    
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    
+                    resolve(canvas.toDataURL('image/jpeg', 0.6)); // 60% quality
+                }
+            });
+        }
+
         function renderPG(i,k,p,l){let h=`<div class="photo-column"><div style="text-align:center;font-size:0.8rem;color:#C79AA5;">${l}</div><div class="photo-grid">`;p.forEach(u=>h+=`<div class="photo-box has-img" style="background-image:url(${u})"></div>`);if(p.length<3)h+=`<label class="photo-box">+<input type="file" style="display:none" accept="image/*" onchange="window.uploadPhoto(${i},'${k}',this)"></label>`;return h+'</div></div>';}
-        window.uploadPhoto=(i,k,inp)=>{if(inp.files[0]){const r=new FileReader();r.onload=e=>{const c=clients.find(x=>x.id===currentClientId);let ns=[...c.sessions];if(!ns[i][k])ns[i][k]=[];ns[i][k].push(e.target.result);updateDoc(doc(db,"clients",c.firebaseId),{sessions:ns});};r.readAsDataURL(inp.files[0]);}};
+        
+        // V51: Modified uploadPhoto with compression
+        window.uploadPhoto = async (i, k, inp) => {
+            if(inp.files[0]) {
+                const compressedDataUrl = await compressImage(inp.files[0]);
+                const c = clients.find(x => x.id === currentClientId);
+                let ns = [...c.sessions];
+                if(!ns[i][k]) ns[i][k] = [];
+                ns[i][k].push(compressedDataUrl);
+                updateDoc(doc(db, "clients", c.firebaseId), { sessions: ns });
+            }
+        };
+
         window.createNewClient=()=>{const n=prompt("姓名?");if(n)addDoc(collection(db,"clients"),{id:Date.now(),name:n,balance:0,birthday:"",sessions:[],transactions:[],notes:"",tags:[], profileData:{}, signature: ""}).then(()=>{window.pendingNewClientId = Date.now();});};
         
         window.saveProfile=()=>{

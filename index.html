@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bianca_eye.studio 管理系統 (V49 單品折扣版)</title>
+    <title>Bianca_eye.studio 管理系統 (V50 課程墊片文字版)</title>
     <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
         /* --- 核心 CSS --- */
@@ -49,7 +49,6 @@
 
         .cart-list { flex-grow: 1; overflow-y: auto; background: white; border: 2px solid var(--main-pink); border-radius: 10px; padding: 10px; margin-bottom: 15px; }
         .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px dashed #eee; font-size: 1.1rem; cursor: pointer; border-left: 5px solid transparent; }
-        /* V49: Highlight Selected Item */
         .cart-item.active-item { background-color: #FFF0F5; border-left: 5px solid var(--highlight-color); }
         
         .cart-remove { color: var(--danger-color); cursor: pointer; margin-left: 10px; font-weight: bold; }
@@ -119,6 +118,11 @@
         .photo-grid { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; }
         .photo-box { width: 60px; height: 60px; border: 2px dashed #ccc; display: flex; align-items: center; justify-content: center; background-size: cover; cursor: pointer; border-radius: 8px; }
         .photo-box.has-img { border: 2px solid var(--dark-pink); cursor: default; }
+        
+        /* V50: Pad Text Area */
+        .pad-input { width: 100%; height: 60px; border: 2px dashed #ccc; border-radius: 8px; padding: 5px; resize: none; font-family: inherit; font-size: 0.9rem; box-sizing: border-box; }
+        .pad-input:focus { border-color: var(--dark-pink); outline:none; }
+
         .tags-container { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
         .tag-chip { padding: 5px 15px; border: 2px solid var(--main-pink); border-radius: 20px; cursor: pointer; font-size: 1rem; transition: 0.2s; }
         .tag-chip.active { background: var(--main-pink); color: white; border-color: var(--dark-pink); }
@@ -147,7 +151,7 @@
     <div id="login-overlay">
         <div class="login-box">
             <h2>Bianca<br>Eye Studio</h2>
-            <div style="font-size: 0.9rem; margin-bottom: 15px; color: var(--dark-pink);">✨ V49 單品折扣版</div>
+            <div style="font-size: 0.9rem; margin-bottom: 15px; color: var(--dark-pink);">✨ V50 課程墊片文字版</div>
             <input type="email" id="login_email" class="login-input" placeholder="Firebase Email">
             <input type="password" id="login_pwd" class="login-input" placeholder="密碼">
             <button id="btnLogin" class="login-btn">登入系統</button>
@@ -535,46 +539,30 @@
 
         function addToCart(item) {
             if(item.type === 'discount' && cart.some(i => i.type === 'discount')) return alert("已有折扣");
-            
-            // Store original price if not present
             if(item.price && !item.originalPrice) item.originalPrice = item.price;
-            
             cart.push(item);
-            selectedCartIndex = cart.length - 1; // Auto select new item
+            selectedCartIndex = cart.length - 1; 
             updateCalculations();
         }
         
-        // V49: Select Item
         window.selectCartItem = (idx) => {
             selectedCartIndex = idx;
-            updateCalculations(); // Re-render to show highlight
+            updateCalculations(); 
         }
 
-        // V49: Apply Single Item Discount
         window.applySingleItemDiscount = () => {
             if(selectedCartIndex === -1 || !cart[selectedCartIndex]) return alert("請先從右側點選要打折的商品！");
-            
             const item = cart[selectedCartIndex];
             if(item.type === 'discount' || item.type === 'fixed_discount') return alert("優惠項目無法再打折");
-            
             let rate = prompt(`請輸入 [${item.name}] 的折扣 (例如 0.9 = 9折):`);
             if(!rate || isNaN(rate)) return;
-            
-            // Reset to original price before calculating new discount to avoid double counting
             const basePrice = item.originalPrice || item.price;
             item.price = Math.round(basePrice * parseFloat(rate));
-            
-            // Update name to show discount if not already shown
             if(!item.name.includes("折)")) {
                 item.name = `${item.name} (${parseFloat(rate)*10}折)`;
             } else {
-                // Replace existing discount text
                 item.name = item.name.replace(/\(\d+(\.\d+)?折\)/, `(${parseFloat(rate)*10}折)`);
             }
-            
-            // Item is now discounted, mark it so we don't accidentally auto-discount it later if needed (though auto discount checks specific names)
-            // But user manually modified it, so we leave it be.
-            
             updateCalculations();
         }
 
@@ -645,8 +633,6 @@
                 
                 let tag = item.appliedAuto ? `<span class="first-time-badge">${item.appliedAuto}</span>` : '';
                 let removeBtn = item.type !== 'auto_discount' ? `<span class="cart-remove" onclick="window.removeCart(${idx})">×</span>` : ''; 
-                
-                // V49: Add selection class and click handler
                 let activeClass = (idx === selectedCartIndex) ? 'active-item' : '';
                 
                 list.innerHTML += `<div class="cart-item ${activeClass}" onclick="window.selectCartItem(${idx})"><div>${item.name} ${tag}</div><span>${priceDisplay} ${removeBtn}</span></div>`;
@@ -671,7 +657,7 @@
 
         window.removeCart = (idx) => { 
             cart.splice(idx, 1); 
-            if(selectedCartIndex === idx) selectedCartIndex = -1; // Reset selection if removed
+            if(selectedCartIndex === idx) selectedCartIndex = -1; 
             window.updateCalculations(); 
         };
         
@@ -679,7 +665,6 @@
             if(cart.length===0) return alert("購物車空的");
             const name = document.getElementById('pos_client_name').value || "Walk-in";
             
-            // Re-calc for submit
             let grossTotal = 0, fixedDeductions = 0, discountMultiplier = 1, topupAmt = 0;
             let courseItems = [];
             let catSummary = {};
@@ -760,7 +745,7 @@
                 document.getElementById('posBalance').innerText='-';
                 document.getElementById('use_balance').checked=false;
                 selectedPosClient = null;
-                selectedCartIndex = -1; // V49: Reset selection
+                selectedCartIndex = -1; 
                 window.updateCalculations();
             });
         }
@@ -828,9 +813,6 @@
                             const match = target.method.match(/儲值扣\$(\d+)/);
                             if(match) { newBal += parseInt(match[1]); isModified = true; }
                         }
-                        // Handle Expense/Topup
-                        if(target.total < 0 && target.category.includes("支出")) {
-                        }
                         if(target.items.includes("儲值金") && target.total > 0) { 
                              newBal -= target.total; isModified = true;
                         }
@@ -895,14 +877,31 @@
             });
         }
 
+        // V46: Updated Filter Logic & Counter
         window.renderClientList=()=>{
             const l=document.getElementById('clientList');
-            const f=document.getElementById('monthFilter').value;
+            const mFilter = document.getElementById('monthFilter').value;
+            const rFilter = document.getElementById('regionFilter').value; // V46
+            
             l.innerHTML='';
+            let count = 0; // V46: Client Counter
+
             clients.forEach(c=>{
-                let s=true;
-                if(f!=='all'){if(!c.birthday)s=false;else if(c.birthday.split('-')[1]!==f)s=false;}
-                if(s){
+                let show = true;
+                
+                // Month Filter
+                if(mFilter !== 'all'){
+                    if(!c.birthday) show=false;
+                    else if(c.birthday.split('-')[1]!==mFilter) show=false;
+                }
+                
+                // Region Filter (V46)
+                if(rFilter !== 'all') {
+                    if((c.region || '') !== rFilter) show = false;
+                }
+
+                if(show){
+                    count++; // Increment
                     const li=document.createElement('li');
                     li.className=`client-item ${c.id===currentClientId?'active':''}`;
                     let birthdayIcon = '';
@@ -918,6 +917,8 @@
                     l.appendChild(li);
                 }
             })
+            // Update Count Display
+            document.getElementById('clientTotalCount').innerText = `👥 列表人數：${count} 人`;
         };
         
         window.loadClient=(id)=>{
@@ -931,7 +932,7 @@
             document.getElementById('p_name').value=c.name||'';
             document.getElementById('p_phone').value=c.phone||'';
             document.getElementById('p_birthday').value=c.birthday||'';
-            document.getElementById('p_region').value=c.region||''; 
+            document.getElementById('p_region').value=c.region||''; // V45
             document.getElementById('clientNotes').value=c.notes||'';
             
             if(c.profileData) {
@@ -941,7 +942,7 @@
                 }
             }
             if(c.friend_name) document.getElementById('p_friend_name').value = c.friend_name;
-            if(c.neighbor_unit) document.getElementById('p_neighbor_unit').value = c.neighbor_unit;
+            if(c.neighbor_unit) document.getElementById('p_neighbor_unit').value = c.neighbor_unit; // V45
             if(c.eye_disease) document.getElementById('p_disease').value = c.eye_disease;
             if(c.allergy_other) document.getElementById('p_allergy_other').value = c.allergy_other;
             if(c.experience) document.getElementById('p_exp').value = c.experience;
@@ -965,7 +966,8 @@
 
             const sL=document.getElementById('sessionList');sL.innerHTML='';
             if(c.sessions)c.sessions.forEach((s,i)=>{
-                let h=`<div style="background:#FFF0F5;border:1px solid #EAC8D0;margin-bottom:10px;padding:10px;border-radius:10px;"><div style="display:flex;justify-content:space-between;"><div><b>${s.date}</b><br>${s.items.join(', ')}</div><button style="background:var(--danger-color);color:white;border:none;padding:2px 8px;border-radius:5px;cursor:pointer;" onclick="window.deleteSession(${i})">🗑️</button></div><div class="photos-container">${renderPG(i,'prePhotos',s.prePhotos||[],'前')}${renderPG(i,'padPhotos',s.padPhotos||[],'墊片')}${renderPG(i,'postPhotos',s.postPhotos||[],'後')}</div></div>`;
+                // V50: Use textarea for Pad Note
+                let h=`<div style="background:#FFF0F5;border:1px solid #EAC8D0;margin-bottom:10px;padding:10px;border-radius:10px;"><div style="display:flex;justify-content:space-between;"><div><b>${s.date}</b><br>${s.items.join(', ')}</div><button style="background:var(--danger-color);color:white;border:none;padding:2px 8px;border-radius:5px;cursor:pointer;" onclick="window.deleteSession(${i})">🗑️</button></div><div class="photos-container">${renderPG(i,'prePhotos',s.prePhotos||[],'前')}<div class="photo-column"><div style="text-align:center;font-size:0.8rem;color:#C79AA5;">墊片型號/備註</div><textarea class="pad-input" onchange="window.updateSessionPad(this, ${i})">${s.padNote||''}</textarea></div>${renderPG(i,'postPhotos',s.postPhotos||[],'後')}</div></div>`;
                 sL.innerHTML+=h;
             });
             
@@ -976,6 +978,14 @@
             renderTags();
         };
         
+        // V50: Update Pad Note
+        window.updateSessionPad = (el, idx) => {
+            const c = clients.find(x => x.id === currentClientId);
+            let newSessions = [...c.sessions];
+            newSessions[idx].padNote = el.value;
+            updateDoc(doc(db, "clients", c.firebaseId), { sessions: newSessions });
+        };
+
         // V48: Open Large Modal Logic
         window.openSignatureModal = () => {
             if(!currentClientId) return alert("請先選擇客戶！");

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bianca_eye.studio 管理系統 (V48 簽名優化版)</title>
+    <title>Bianca_eye.studio 管理系統 (V49 單品折扣版)</title>
     <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
         /* --- 核心 CSS --- */
@@ -48,7 +48,10 @@
         .item-btn.special { border-style: dashed; background: #fafafa; }
 
         .cart-list { flex-grow: 1; overflow-y: auto; background: white; border: 2px solid var(--main-pink); border-radius: 10px; padding: 10px; margin-bottom: 15px; }
-        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px dashed #eee; font-size: 1.1rem; }
+        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px dashed #eee; font-size: 1.1rem; cursor: pointer; border-left: 5px solid transparent; }
+        /* V49: Highlight Selected Item */
+        .cart-item.active-item { background-color: #FFF0F5; border-left: 5px solid var(--highlight-color); }
+        
         .cart-remove { color: var(--danger-color); cursor: pointer; margin-left: 10px; font-weight: bold; }
         .auto-discount-tag { color: var(--highlight-color); font-size: 0.8rem; display: block; margin-top: 2px; font-weight: bold;}
         .first-time-badge { background: var(--highlight-color); color: white; padding: 2px 5px; border-radius: 4px; font-size: 0.8rem; margin-left: 5px; }
@@ -124,7 +127,6 @@
         .agree-label input { margin-top: 5px; flex-shrink: 0; }
         input[type="checkbox"] { transform: scale(1.2); accent-color: var(--dark-pink); }
         
-        /* V48: Signature Preview and Modal */
         #signature-preview-box {
             border: 2px dashed var(--main-pink); border-radius: 10px; background: #fff; width: 100%; height: 100px;
             display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer;
@@ -133,6 +135,7 @@
         #signature-preview-box:hover { background: #FFF0F5; border-color: var(--dark-pink); }
         #signature-preview-img { max-width: 100%; max-height: 100%; object-fit: contain; display: none; }
         #signature-placeholder { color: var(--dark-pink); font-weight: bold; }
+        #signature-pad { border: 2px dashed var(--text-color); border-radius: 10px; background: #fff; width: 100%; height: 150px; cursor: crosshair; touch-action: none; }
         
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { text-align: left; padding: 8px; border-bottom: 1px dashed var(--main-pink); }
@@ -144,7 +147,7 @@
     <div id="login-overlay">
         <div class="login-box">
             <h2>Bianca<br>Eye Studio</h2>
-            <div style="font-size: 0.9rem; margin-bottom: 15px; color: var(--dark-pink);">✨ V48 簽名優化版</div>
+            <div style="font-size: 0.9rem; margin-bottom: 15px; color: var(--dark-pink);">✨ V49 單品折扣版</div>
             <input type="email" id="login_email" class="login-input" placeholder="Firebase Email">
             <input type="password" id="login_pwd" class="login-input" placeholder="密碼">
             <button id="btnLogin" class="login-btn">登入系統</button>
@@ -211,6 +214,7 @@
                 <div class="category-title">🎁 優惠 / 其他</div>
                 <div class="items-grid">
                     <span id="pos_discounts" style="display:contents"></span>
+                    <div class="item-btn special" style="border-color:#FF69B4;color:#FF69B4;" onclick="window.applySingleItemDiscount()">單品折扣<br><small>選取商品後點擊</small></div>
                     <div class="item-btn special" style="border-color:var(--blue-color);color:var(--blue-color);" onclick="window.addModelPrice()">模特價<br><small>輸入金額</small></div>
                 </div>
             </div>
@@ -450,6 +454,8 @@
         
         // V48: Signature Variables
         let signaturePad, signatureCtx, isSigning = false;
+        // V49: Selected Item Variables
+        let selectedCartIndex = -1;
 
         function startListeningDB() {
             onSnapshot(query(collection(db, "clients"), orderBy("id", "desc")), (snap) => {
@@ -529,7 +535,46 @@
 
         function addToCart(item) {
             if(item.type === 'discount' && cart.some(i => i.type === 'discount')) return alert("已有折扣");
+            
+            // Store original price if not present
+            if(item.price && !item.originalPrice) item.originalPrice = item.price;
+            
             cart.push(item);
+            selectedCartIndex = cart.length - 1; // Auto select new item
+            updateCalculations();
+        }
+        
+        // V49: Select Item
+        window.selectCartItem = (idx) => {
+            selectedCartIndex = idx;
+            updateCalculations(); // Re-render to show highlight
+        }
+
+        // V49: Apply Single Item Discount
+        window.applySingleItemDiscount = () => {
+            if(selectedCartIndex === -1 || !cart[selectedCartIndex]) return alert("請先從右側點選要打折的商品！");
+            
+            const item = cart[selectedCartIndex];
+            if(item.type === 'discount' || item.type === 'fixed_discount') return alert("優惠項目無法再打折");
+            
+            let rate = prompt(`請輸入 [${item.name}] 的折扣 (例如 0.9 = 9折):`);
+            if(!rate || isNaN(rate)) return;
+            
+            // Reset to original price before calculating new discount to avoid double counting
+            const basePrice = item.originalPrice || item.price;
+            item.price = Math.round(basePrice * parseFloat(rate));
+            
+            // Update name to show discount if not already shown
+            if(!item.name.includes("折)")) {
+                item.name = `${item.name} (${parseFloat(rate)*10}折)`;
+            } else {
+                // Replace existing discount text
+                item.name = item.name.replace(/\(\d+(\.\d+)?折\)/, `(${parseFloat(rate)*10}折)`);
+            }
+            
+            // Item is now discounted, mark it so we don't accidentally auto-discount it later if needed (though auto discount checks specific names)
+            // But user manually modified it, so we leave it be.
+            
             updateCalculations();
         }
 
@@ -600,7 +645,11 @@
                 
                 let tag = item.appliedAuto ? `<span class="first-time-badge">${item.appliedAuto}</span>` : '';
                 let removeBtn = item.type !== 'auto_discount' ? `<span class="cart-remove" onclick="window.removeCart(${idx})">×</span>` : ''; 
-                list.innerHTML += `<div class="cart-item"><div>${item.name} ${tag}</div><span>${priceDisplay} ${removeBtn}</span></div>`;
+                
+                // V49: Add selection class and click handler
+                let activeClass = (idx === selectedCartIndex) ? 'active-item' : '';
+                
+                list.innerHTML += `<div class="cart-item ${activeClass}" onclick="window.selectCartItem(${idx})"><div>${item.name} ${tag}</div><span>${priceDisplay} ${removeBtn}</span></div>`;
             });
 
             if(cart.length===0) list.innerHTML = '<div style="text-align:center;color:#ccc;margin-top:50px;">尚未選擇項目</div>';
@@ -620,12 +669,17 @@
             payRow.style.display = 'flex'; 
         }
 
-        window.removeCart = (idx) => { cart.splice(idx, 1); window.updateCalculations(); };
+        window.removeCart = (idx) => { 
+            cart.splice(idx, 1); 
+            if(selectedCartIndex === idx) selectedCartIndex = -1; // Reset selection if removed
+            window.updateCalculations(); 
+        };
         
         window.submitCheckout = () => {
             if(cart.length===0) return alert("購物車空的");
             const name = document.getElementById('pos_client_name').value || "Walk-in";
             
+            // Re-calc for submit
             let grossTotal = 0, fixedDeductions = 0, discountMultiplier = 1, topupAmt = 0;
             let courseItems = [];
             let catSummary = {};
@@ -706,6 +760,7 @@
                 document.getElementById('posBalance').innerText='-';
                 document.getElementById('use_balance').checked=false;
                 selectedPosClient = null;
+                selectedCartIndex = -1; // V49: Reset selection
                 window.updateCalculations();
             });
         }
@@ -865,7 +920,6 @@
             })
         };
         
-        // V47 & V48: Load client logic with signature preview
         window.loadClient=(id)=>{
             if(saveTimer) clearTimeout(saveTimer);
             currentClientId=id;

@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bianca_eye.studio 管理系統 (V51 圖片壓縮版)</title>
+    <title>Bianca_eye.studio 管理系統 (V55 共享儲值版)</title>
     <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
         /* --- 核心 CSS --- */
-        :root { --bg-color: #Fdfbfb; --main-pink: #EAC8D0; --dark-pink: #C79AA5; --text-color: #6D6063; --card-bg: #FFFFFF; --shadow: 4px 4px 0px #EAC8D0; --danger-color: #CD5C5C; --success-color: #2E8B57; --highlight-color: #FF69B4; --blue-color: #4682B4; --expense-color: #8B4513; }
+        :root { --bg-color: #Fdfbfb; --main-pink: #EAC8D0; --dark-pink: #C79AA5; --text-color: #6D6063; --card-bg: #FFFFFF; --shadow: 4px 4px 0px #EAC8D0; --danger-color: #CD5C5C; --success-color: #2E8B57; --highlight-color: #FF69B4; --blue-color: #4682B4; --expense-color: #8B4513; --member-gold: #DAA520; --topup-color: #20B2AA; }
         body { font-family: 'Gaegu', "微軟正黑體", sans-serif; background-color: var(--bg-color); background-image: radial-gradient(#EAC8D0 1px, transparent 1px); background-size: 20px 20px; color: var(--text-color); margin: 0; padding: 0; height: 100vh; overflow: hidden; }
         ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; } ::-webkit-scrollbar-thumb { background: var(--dark-pink); border-radius: 4px; } ::-webkit-scrollbar-thumb:hover { background: #a86e7b; }
         button { font-family: inherit; cursor: pointer; border: 2px solid var(--text-color); transition: 0.2s; }
@@ -50,7 +50,9 @@
         .cart-list { flex-grow: 1; overflow-y: auto; background: white; border: 2px solid var(--main-pink); border-radius: 10px; padding: 10px; margin-bottom: 15px; }
         .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px dashed #eee; font-size: 1.1rem; cursor: pointer; border-left: 5px solid transparent; }
         .cart-item.active-item { background-color: #FFF0F5; border-left: 5px solid var(--highlight-color); }
-        
+        .cart-item.member-price { background-color: #FFF8DC; border-left: 5px solid var(--member-gold); }
+        .cart-item.gift-item { color: #2E8B57; font-size: 0.95rem; }
+
         .cart-remove { color: var(--danger-color); cursor: pointer; margin-left: 10px; font-weight: bold; }
         .auto-discount-tag { color: var(--highlight-color); font-size: 0.8rem; display: block; margin-top: 2px; font-weight: bold;}
         .first-time-badge { background: var(--highlight-color); color: white; padding: 2px 5px; border-radius: 4px; font-size: 0.8rem; margin-left: 5px; }
@@ -64,6 +66,8 @@
         .split-pay-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 1.1rem; }
         .checkout-btn { background: var(--dark-pink); color: white; width: 100%; padding: 15px; font-size: 1.5rem; border-radius: 10px; border: 2px solid var(--text-color); margin-top: 10px; }
         .back-home-btn { background: #eee; padding: 5px 10px; border-radius: 5px; font-size: 0.9rem; }
+        
+        .member-check-wrapper { background: #FFF8DC; border: 1px solid #DAA520; padding: 5px 10px; border-radius: 8px; margin-top: 5px; display: inline-block; color: #B8860B; font-weight: bold; width: 100%; box-sizing: border-box;}
 
         /* 報表系統 */
         .full-view { display: none; width: 100%; height: 100%; gap: 20px; padding: 20px; box-sizing: border-box; }
@@ -140,10 +144,6 @@
         #signature-placeholder { color: var(--dark-pink); font-weight: bold; }
         #signature-pad { border: 2px dashed var(--text-color); border-radius: 10px; background: #fff; width: 100%; height: 150px; cursor: crosshair; touch-action: none; }
         
-        /* Spinner */
-        .loading-spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--dark-pink); border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; position:absolute; display:none;}
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { text-align: left; padding: 8px; border-bottom: 1px dashed var(--main-pink); }
         th { color: var(--dark-pink); background: #FFF0F5;}
@@ -154,7 +154,7 @@
     <div id="login-overlay">
         <div class="login-box">
             <h2>Bianca<br>Eye Studio</h2>
-            <div style="font-size: 0.9rem; margin-bottom: 15px; color: var(--dark-pink);">✨ V51 圖片壓縮版</div>
+            <div style="font-size: 0.9rem; margin-bottom: 15px; color: var(--dark-pink);">✨ V55 共享儲值版</div>
             <input type="email" id="login_email" class="login-input" placeholder="Firebase Email">
             <input type="password" id="login_pwd" class="login-input" placeholder="密碼">
             <button id="btnLogin" class="login-btn">登入系統</button>
@@ -202,9 +202,12 @@
                 <div class="category-title">🛍️ 產品</div>
                 <div class="items-grid" id="pos_products"></div>
                 
-                <div class="category-title" style="margin-top:15px; color:#4682B4;">💰 儲值專區</div>
+                <div class="category-title" style="margin-top:15px; color:#4682B4;">💰 儲值專區 (自動贈禮)</div>
                 <div class="items-grid">
-                    <div class="item-btn special" style="border-color:#4682B4;color:#4682B4; width:100%;" onclick="window.addTopUp()">儲值金<br><small>自訂金額 (購買點數)</small></div>
+                    <div class="item-btn special" style="border-color:var(--topup-color);color:var(--topup-color); width:130px;" onclick="window.addTopUpPackage(1)">小資體驗組<br><small>$3000</small></div>
+                    <div class="item-btn special" style="border-color:var(--topup-color);color:var(--topup-color); width:130px;" onclick="window.addTopUpPackage(2)">經典亮眼組<br><small>$5000</small></div>
+                    <div class="item-btn special" style="border-color:var(--topup-color);color:var(--topup-color); width:130px;" onclick="window.addTopUpPackage(3)">極致寵愛組<br><small>$10000</small></div>
+                    <div class="item-btn special" style="border-color:#ccc;color:#666;" onclick="window.addTopUp()">自訂金額<br><small>無贈品</small></div>
                 </div>
             </div>
             
@@ -235,6 +238,10 @@
                 <input type="text" id="pos_client_name" list="client_list_suggestions" placeholder="輸入顧客姓名搜尋..." style="width: 100%;" oninput="window.checkPosClient(this.value)">
                 <datalist id="client_list_suggestions"></datalist>
             </div>
+            
+            <label class="member-check-wrapper">
+                <input type="checkbox" id="is_member_rate" onchange="window.updateCalculations()"> 👑 套用儲值會員價
+            </label>
 
             <div class="balance-display">
                 儲值金餘額：<span id="posBalance" class="balance-amount">-</span>
@@ -247,8 +254,12 @@
                 
                 <div style="margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:10px;">
                     <div class="split-pay-row">
-                        <label style="display:flex;align-items:center;cursor:pointer"><input type="checkbox" id="use_balance" onchange="window.updateCalculations()"> 使用儲值金扣款</label>
-                        <span id="deduct_display" style="color:var(--danger-color)">-$0</span>
+                        <label style="display:flex;align-items:center;cursor:pointer">
+                            <input type="checkbox" id="use_balance" onchange="window.updateCalculations()"> 使用儲值金扣款
+                        </label>
+                        <select id="shared_payer" style="margin-left:10px; padding:2px; font-size:0.9rem;" onchange="window.updateCalculations()">
+                            </select>
+                        <span id="deduct_display" style="color:var(--danger-color); margin-left:auto;">-$0</span>
                     </div>
                 </div>
 
@@ -400,6 +411,17 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        
+        const POS_CONFIG = {
+            MEMBER_RATE: {
+                'LASH_UP': 850,
+                'LASH_DOWN_SINGLE': 400,
+                'LASH_DOWN_ADDON': 250,
+                'BROW': 850,
+                'COMBO': 1600
+            },
+            SHARE_DISCOUNT: 50
+        };
 
         // --- View Control ---
         const views = { login: 'login-overlay', dashboard: 'dashboard-view', pos: 'pos-view', crm: 'crm-view', daily: 'daily-view', monthly: 'monthly-view' };
@@ -435,14 +457,13 @@
             return (parseInt(m) === today.getMonth() + 1) && (parseInt(d) === today.getDate());
         }
 
-        // V45: Sidebar Toggle
         window.toggleSidebar = () => {
             document.getElementById('crmSidebar').classList.toggle('closed');
         }
 
         // --- POS Logic ---
         let defaultMenu = {
-            courses: [{ name: "上睫毛管理", price: 999 }, { name: "下睫毛管理", price: 500 }, { name: "野生眉雕塑", price: 999 }],
+            courses: [{ name: "上睫毛管理", price: 999 }, { name: "下睫毛管理", price: 500 }, { name: "野生眉雕塑", price: 999 }, { name: "純修眉", price: 100 }, { name: "卸妝", price: 100 }],
             products: [{ name: "睫毛雨衣", price: 600 }, { name: "睫毛滋養液", price: 930 }],
             discounts: [
                 { name: "9折優惠", type: "discount", val: 0.9 }, 
@@ -459,9 +480,7 @@
         let unsubscribeMonthly = null;
         let saveTimer = null; 
         
-        // V48: Signature Variables
         let signaturePad, signatureCtx, isSigning = false;
-        // V49: Selected Item Variables
         let selectedCartIndex = -1;
 
         function startListeningDB() {
@@ -469,6 +488,8 @@
                 clients = snap.docs.map(d => ({ firebaseId: d.id, ...d.data() }));
                 window.renderClientList();
                 renderClientDatalist();
+                renderPayerSelect(); // V55: Refresh payers
+                
                 if(window.pendingNewClientId) {
                     const newClient = clients.find(c => c.id === window.pendingNewClientId);
                     if(newClient) {
@@ -480,6 +501,38 @@
                      window.loadClient(currentClientId);
                 }
             });
+        }
+        
+        // V55: Populate Payer Dropdown
+        function renderPayerSelect() {
+            const select = document.getElementById('shared_payer');
+            if(!select) return;
+            const currentSelection = select.value;
+            select.innerHTML = '';
+            
+            // If a client is selected in POS, add them first
+            if(selectedPosClient) {
+                const opt = document.createElement('option');
+                opt.value = selectedPosClient.name;
+                opt.innerText = `${selectedPosClient.name} (本人)`;
+                select.appendChild(opt);
+            }
+            
+            // Add other clients with balance > 0
+            clients.forEach(c => {
+                if(selectedPosClient && c.id === selectedPosClient.id) return; // Skip self
+                if(c.balance > 0) {
+                    const opt = document.createElement('option');
+                    opt.value = c.name;
+                    opt.innerText = `${c.name} (餘額$${c.balance})`;
+                    select.appendChild(opt);
+                }
+            });
+            
+            // Restore selection if possible, else default to self
+            if(currentSelection && Array.from(select.options).some(o => o.value === currentSelection)) {
+                select.value = currentSelection;
+            }
         }
 
         function renderPOS() {
@@ -514,7 +567,15 @@
 
         window.checkPosClient = (val) => {
             selectedPosClient = clients.find(c => c.name === val) || null;
-            document.getElementById('posBalance').innerText = selectedPosClient ? `$${selectedPosClient.balance||0}` : '$0';
+            const balance = selectedPosClient ? (selectedPosClient.balance || 0) : 0;
+            document.getElementById('posBalance').innerText = `$${balance}`;
+            
+            if(balance > 0) {
+                document.getElementById('is_member_rate').checked = true;
+            } else {
+                document.getElementById('is_member_rate').checked = false;
+            }
+            renderPayerSelect(); // V55: Update payer dropdown
             updateCalculations(); 
         }
 
@@ -534,6 +595,32 @@
             let finalName = "模特價";
             if(note) finalName += `-${note}`;
             addToCart({ name: finalName, price: parseInt(amt), category: '課程' });
+        }
+        
+        window.addTopUpPackage = (level) => {
+            let pkg = {};
+            if(level === 1) { pkg = { name: "儲值-小資體驗組", price: 3000, value: 3200, gift: null }; }
+            if(level === 2) { pkg = { name: "儲值-經典亮眼組", price: 5000, value: 5500, gift: "睫毛雨衣" }; }
+            if(level === 3) { pkg = { name: "儲值-極致寵愛組", price: 10000, value: 11500, gift: "睫毛滋養液" }; }
+
+            cart.push({
+                name: pkg.name,
+                price: pkg.price,
+                actualValue: pkg.value, 
+                type: 'topup_package',
+                category: '儲值金'
+            });
+
+            if(pkg.gift) {
+                cart.push({
+                    name: `贈品-${pkg.gift}`,
+                    price: 0,
+                    type: 'gift', 
+                    category: '產品',
+                    isGift: true 
+                });
+            }
+            updateCalculations();
         }
 
         window.showTintModal = () => document.getElementById('tintModal').style.display='flex';
@@ -596,6 +683,42 @@
             if(counts.tintUp > 0 && counts.tintLow > 0) cart.push({ name: "存在感Up優惠", price: -50, type: 'auto_discount' });
         }
 
+        function applyMemberLogic() {
+            const isMember = document.getElementById('is_member_rate').checked;
+            if (!isMember) {
+                applyAutoDiscounts();
+                return;
+            }
+
+            cart = cart.filter(i => i.type !== 'auto_discount'); 
+
+            const hasUpper = cart.some(i => i.name.includes('上睫毛管理'));
+            const hasBrow = cart.some(i => i.name.includes('野生眉'));
+            const hasLower = cart.some(i => i.name.includes('下睫毛管理'));
+
+            cart.forEach(item => {
+                if(item.name.includes('模特價') || item.price < 0 || item.type === 'topup_purchase' || item.type === 'topup_package') return;
+
+                item.isMemberPrice = true; 
+
+                if (item.name.includes('上睫毛管理')) {
+                    item.price = POS_CONFIG.MEMBER_RATE.LASH_UP;
+                } 
+                else if (item.name.includes('野生眉雕塑')) {
+                    item.price = POS_CONFIG.MEMBER_RATE.BROW;
+                }
+                else if (item.name.includes('下睫毛管理')) {
+                    item.price = hasUpper ? POS_CONFIG.MEMBER_RATE.LASH_DOWN_ADDON : POS_CONFIG.MEMBER_RATE.LASH_DOWN_SINGLE;
+                }
+            });
+
+            if(hasUpper && hasBrow) {
+                if(!cart.some(i => i.name === '會員組合優惠')) {
+                     cart.push({ name: "會員組合優惠", price: -100, type: 'auto_discount', isMemberPrice: true });
+                }
+            }
+        }
+
         function hasHistory(client, keyword) {
             if(!client.transactions) return false;
             return client.transactions.some(t => {
@@ -606,7 +729,16 @@
         }
 
         window.updateCalculations = () => {
-            if(selectedPosClient) applyAutoDiscounts(); 
+            if(document.getElementById('is_member_rate').checked) {
+                applyMemberLogic();
+            } else {
+                cart.forEach(i => {
+                    if(i.originalPrice) i.price = i.originalPrice;
+                    delete i.isMemberPrice;
+                });
+                if(selectedPosClient) applyAutoDiscounts(); 
+            }
+
             const list = document.getElementById('cartList'); list.innerHTML = '';
             
             let grossTotal = 0;
@@ -637,17 +769,28 @@
                 let tag = item.appliedAuto ? `<span class="first-time-badge">${item.appliedAuto}</span>` : '';
                 let removeBtn = item.type !== 'auto_discount' ? `<span class="cart-remove" onclick="window.removeCart(${idx})">×</span>` : ''; 
                 let activeClass = (idx === selectedCartIndex) ? 'active-item' : '';
+                let memberClass = item.isMemberPrice ? 'member-price' : ''; 
+                let giftClass = item.isGift ? 'gift-item' : '';
                 
-                list.innerHTML += `<div class="cart-item ${activeClass}" onclick="window.selectCartItem(${idx})"><div>${item.name} ${tag}</div><span>${priceDisplay} ${removeBtn}</span></div>`;
+                list.innerHTML += `<div class="cart-item ${activeClass} ${memberClass} ${giftClass}" onclick="window.selectCartItem(${idx})"><div>${item.name} ${tag}</div><span>${priceDisplay} ${removeBtn}</span></div>`;
             });
 
             if(cart.length===0) list.innerHTML = '<div style="text-align:center;color:#ccc;margin-top:50px;">尚未選擇項目</div>';
 
             const useBal = document.getElementById('use_balance').checked;
             const balance = selectedPosClient ? (selectedPosClient.balance || 0) : 0;
+            
+            // V55: Shared Payer Logic
+            const payerName = document.getElementById('shared_payer') ? document.getElementById('shared_payer').value : null;
+            let payerBalance = balance;
+            if(payerName && selectedPosClient && payerName !== selectedPosClient.name) {
+                const payer = clients.find(c => c.name === payerName);
+                if(payer) payerBalance = payer.balance;
+            }
+
             let deduct = 0;
             if(useBal && grandTotal > 0) { 
-                 deduct = Math.min(grandTotal, balance);
+                 deduct = Math.min(grandTotal, payerBalance);
             }
             let remain = grandTotal - deduct;
             
@@ -664,20 +807,21 @@
             window.updateCalculations(); 
         };
         
+        // V55: Updated Checkout Logic
         window.submitCheckout = () => {
             if(cart.length===0) return alert("購物車空的");
             const name = document.getElementById('pos_client_name').value || "Walk-in";
             
-            let grossTotal = 0, fixedDeductions = 0, discountMultiplier = 1, topupAmt = 0;
+            let grossTotal = 0, discountMultiplier = 1, topupAmt = 0;
             let courseItems = [];
             let catSummary = {};
 
             cart.forEach(i => {
                 if(i.type==='discount') discountMultiplier = i.val;
-                else if(i.type==='fixed_discount') fixedDeductions += i.val;
-                else {
+                else if(i.type!=='fixed_discount') {
                     grossTotal += i.price;
-                    if(i.type==='topup_purchase') topupAmt += i.price;
+                    if(i.type==='topup_package') topupAmt += i.actualValue;
+                    else if(i.type==='topup_purchase') topupAmt += i.price;
                     
                     let cat = i.category || '其他';
                     if(!catSummary[cat]) catSummary[cat] = 0;
@@ -688,15 +832,21 @@
                     }
                 }
             });
+            let fixedDeductions = cart.filter(i => i.type === 'fixed_discount').reduce((sum, i) => sum + i.val, 0);
             let taxableBase = grossTotal - fixedDeductions;
             let grandTotal = Math.round(taxableBase * discountMultiplier);
-            
             let categoryStr = Object.entries(catSummary).map(([k,v]) => `${k}($${v})`).join(" + ");
 
             const useBal = document.getElementById('use_balance').checked;
-            const balance = selectedPosClient ? (selectedPosClient.balance || 0) : 0;
+            const payerName = document.getElementById('shared_payer').value;
+            const isShared = useBal && payerName && payerName !== selectedPosClient.name;
+            
+            // Determine Payer
+            let payerClient = isShared ? clients.find(c => c.name === payerName) : selectedPosClient;
+            let payerBalance = payerClient ? (payerClient.balance || 0) : 0;
+
             let deduct = 0;
-            if(useBal && grandTotal > 0) deduct = Math.min(grandTotal, balance);
+            if(useBal && grandTotal > 0) deduct = Math.min(grandTotal, payerBalance);
             let remain = grandTotal - deduct;
             
             const payMethod = remain > 0 ? document.getElementById('pos_method').value : (grandTotal < 0 ? "現金支出" : "儲值金全額");
@@ -704,8 +854,19 @@
 
             if(topupAmt > 0 && useBal) return alert("購買儲值金時不可使用餘額扣款！");
 
+            if (useBal && payerClient) {
+                if (payerBalance >= grandTotal) {
+                    alert(`✅ 結帳成功！\n付款人：${payerClient.name}\n本次扣款：$${deduct}\n剩餘餘額：$${payerBalance - deduct + topupAmt}`);
+                } else {
+                    alert(`⚠️ 餘額不足！\n付款人：${payerClient.name}\n本次扣款：$${deduct}\n尚需補差額：$${remain}`);
+                }
+            } else {
+                alert(`結帳成功！$${grandTotal}`);
+            }
+
             const localDate = getLocalYMD(); 
             
+            // 1. Create Main POS Record
             addDoc(collection(db, "pos_records"), {
                 date: localDate, 
                 timestamp: Date.now(), 
@@ -713,16 +874,22 @@
                 items: itemsName, 
                 category: categoryStr, 
                 total: grandTotal,
-                method: useBal ? `儲值$${deduct} + ${payMethod}$${remain}` : payMethod,
-                type: topupAmt > 0 ? 'topup' : 'service'
+                method: useBal ? `儲值$${deduct}(${payerClient.name}) + ${payMethod}$${remain}` : payMethod,
+                type: topupAmt > 0 ? 'topup' : 'service',
+                payerId: payerClient ? payerClient.firebaseId : null // Track payer for reversals
             }).then(() => {
+                
+                // 2. Update Current Client (Consumer)
                 if(selectedPosClient) {
-                    let newBal = balance - deduct + topupAmt;
+                    // If shared payment, current client balance doesn't change (unless topup involved)
+                    let newBal = selectedPosClient.balance;
+                    if(!isShared) newBal = newBal - deduct + topupAmt;
+                    
                     const newTrans = {
                         date: localDate, 
                         item: itemsName, 
                         amt: grandTotal,
-                        method: useBal ? `儲值扣$${deduct}/${payMethod}` : payMethod
+                        method: isShared ? `${payerClient.name}(儲)` : (useBal ? `儲值扣$${deduct}` : payMethod)
                     };
                     
                     let updates = {
@@ -738,15 +905,28 @@
                         };
                         updates.sessions = arrayUnion(newSession);
                     }
-
                     updateDoc(doc(db, "clients", selectedPosClient.firebaseId), updates);
-                    alert(`結帳完成！\n資料已同步至客戶管理 (消費/課程)。\n餘額更新為：$${newBal}`);
-                } else {
-                    alert(`結帳完成！$${grandTotal} (已寫入帳務)`);
                 }
+
+                // 3. Update Shared Payer (If exists and different)
+                if(isShared && payerClient) {
+                    let newPayerBal = payerClient.balance - deduct;
+                    const payerTrans = {
+                        date: localDate,
+                        item: `儲值金轉-${selectedPosClient.name}`,
+                        amt: -deduct,
+                        method: "轉讓扣款"
+                    };
+                    updateDoc(doc(db, "clients", payerClient.firebaseId), {
+                        balance: newPayerBal,
+                        transactions: arrayUnion(payerTrans)
+                    });
+                }
+
                 cart=[]; document.getElementById('pos_client_name').value=''; 
                 document.getElementById('posBalance').innerText='-';
                 document.getElementById('use_balance').checked=false;
+                document.getElementById('is_member_rate').checked = false; 
                 selectedPosClient = null;
                 selectedCartIndex = -1; 
                 window.updateCalculations();
@@ -800,45 +980,68 @@
             });
         }
         
+        // V55: Robust Delete with Cross-Client Refund
         window.deleteDailyRecord = (id) => {
             if(!confirm("確定刪除此筆結帳？(系統將同步刪除客戶消費/課程紀錄並還原餘額)")) return;
             
-            getDocs(query(collection(db, "pos_records"), where("__name__", "==", id))).then(snap => {
+            getDocs(query(collection(db, "pos_records"), where("__name__", "==", id))).then(async (snap) => {
                 if(!snap.empty) {
                     const target = snap.docs[0].data();
                     
-                    const client = clients.find(c => c.name === target.client);
-                    if(client) {
-                        let newBal = client.balance || 0;
+                    // 1. Identify Payer
+                    // Use stored payerId if available (best for shared), else guess by client name
+                    let payerClient = null;
+                    if(target.payerId) {
+                        const pSnap = await getDoc(doc(db, "clients", target.payerId));
+                        if(pSnap.exists()) payerClient = { firebaseId: pSnap.id, ...pSnap.data() };
+                    } 
+                    // Fallback for old records
+                    if(!payerClient) payerClient = clients.find(c => c.name === target.client);
+
+                    if(payerClient) {
+                        let refundAmt = 0;
                         let isModified = false;
                         
-                        if(target.method.includes("儲值扣")) {
-                            const match = target.method.match(/儲值扣\$(\d+)/);
-                            if(match) { newBal += parseInt(match[1]); isModified = true; }
+                        // Parse deduction amount from method string
+                        // Format: "儲值$500..." or "儲值$500(王大明)..."
+                        if(target.method.includes("儲值")) {
+                           const match = target.method.match(/儲值\$(\d+)/);
+                           if(match) refundAmt = parseInt(match[1]);
                         }
-                        // Handle Expense/Topup
-                        if(target.total < 0 && target.category.includes("支出")) {
-                        }
-                        if(target.items.includes("儲值金") && target.total > 0) { 
-                             newBal -= target.total; isModified = true;
+                        
+                        // Revert Topup Purchase
+                        if(target.items.includes("儲值")) {
+                            // Logic same as V54
+                            if (target.items.includes("小資體驗組")) refundAmt -= 3200;
+                            else if (target.items.includes("經典亮眼組")) refundAmt -= 5500;
+                            else if (target.items.includes("極致寵愛組")) refundAmt -= 11500;
+                            else if (target.total > 0 && !target.items.includes("-")) refundAmt -= target.total;
                         }
 
-                        let newTrans = client.transactions ? [...client.transactions] : [];
-                        const transIdx = newTrans.findIndex(t => t.date === target.date && t.item === target.items && t.amt === target.total);
-                        if(transIdx > -1) { newTrans.splice(transIdx, 1); isModified = true; }
-                        
-                        let newSessions = client.sessions ? [...client.sessions] : [];
-                        const sessIdx = newSessions.findIndex(s => s.date.startsWith(target.date) && target.items.includes(s.items[0])); 
-                        if(sessIdx > -1) { newSessions.splice(sessIdx, 1); isModified = true; }
-                        
-                        if(isModified) {
-                            updateDoc(doc(db, "clients", client.firebaseId), { 
-                                balance: newBal, 
-                                transactions: newTrans, 
-                                sessions: newSessions 
-                            });
+                        if(refundAmt !== 0) {
+                            payerClient.balance += refundAmt;
+                            // Update Payer Balance
+                            await updateDoc(doc(db, "clients", payerClient.firebaseId), { balance: payerClient.balance });
                         }
+                        
+                        // Remove "Transfer" record from Payer if it was shared
+                        // (Simplified: we just refund money, removing the exact transaction string from array is tricky without unique ID, keeping balance correct is priority)
                     }
+
+                    // 2. Remove Consumer Record (Client A)
+                    const clientA = clients.find(c => c.name === target.client);
+                    if(clientA) {
+                         let newTrans = clientA.transactions.filter(t => !(t.date === target.date && t.amt === target.total));
+                         let newSessions = clientA.sessions.filter(s => !s.date.startsWith(target.date));
+                         
+                         // Note: If Client A == Payer, balance is already updated above. 
+                         // Just save arrays here.
+                         await updateDoc(doc(db, "clients", clientA.firebaseId), {
+                             transactions: newTrans,
+                             sessions: newSessions
+                         });
+                    }
+
                     deleteDoc(doc(db, "pos_records", id));
                 }
             });
@@ -886,17 +1089,19 @@
         window.renderClientList=()=>{
             const l=document.getElementById('clientList');
             const f=document.getElementById('monthFilter').value;
+            const r=document.getElementById('regionFilter').value;
             l.innerHTML='';
+            let count = 0;
+
             clients.forEach(c=>{
                 let s=true;
                 if(f!=='all'){if(!c.birthday)s=false;else if(c.birthday.split('-')[1]!==f)s=false;}
+                if(r!=='all'){if((c.region||'')!==r)s=false;}
                 if(s){
+                    count++;
                     const li=document.createElement('li');
                     li.className=`client-item ${c.id===currentClientId?'active':''}`;
-                    let birthdayIcon = '';
-                    if (isTodayBirthday(c.birthday)) {
-                        birthdayIcon = ' 🎂';
-                    }
+                    let birthdayIcon = isTodayBirthday(c.birthday) ? ' 🎂' : '';
                     li.innerHTML=`<span>${c.name}${birthdayIcon}</span><small>$${c.balance||0}</small>`;
                     li.addEventListener('click', () => {
                         window.loadClient(c.id);
@@ -905,7 +1110,8 @@
                     });
                     l.appendChild(li);
                 }
-            })
+            });
+            document.getElementById('clientTotalCount').innerText = `👥 列表人數：${count} 人`;
         };
         
         window.loadClient=(id)=>{
@@ -916,7 +1122,14 @@
             
             document.querySelectorAll('input[type="checkbox"]').forEach(el => el.checked = false);
             
-            document.getElementById('p_name').value=c.name||'';
+            // V54: Auto-clear placeholder
+            if(c.name === "新客") {
+                document.getElementById('p_name').value = "";
+                document.getElementById('p_name').placeholder = "請輸入姓名";
+            } else {
+                document.getElementById('p_name').value=c.name||'';
+            }
+            
             document.getElementById('p_phone').value=c.phone||'';
             document.getElementById('p_birthday').value=c.birthday||'';
             document.getElementById('p_region').value=c.region||''; 
@@ -937,7 +1150,6 @@
             
             attachAutoSave();
 
-            // V48: Preview Logic
             const previewImg = document.getElementById('signature-preview-img');
             const placeholder = document.getElementById('signature-placeholder');
             
@@ -953,7 +1165,6 @@
 
             const sL=document.getElementById('sessionList');sL.innerHTML='';
             if(c.sessions)c.sessions.forEach((s,i)=>{
-                // V50: Use textarea for Pad Note
                 let h=`<div style="background:#FFF0F5;border:1px solid #EAC8D0;margin-bottom:10px;padding:10px;border-radius:10px;"><div style="display:flex;justify-content:space-between;"><div><b>${s.date}</b><br>${s.items.join(', ')}</div><button style="background:var(--danger-color);color:white;border:none;padding:2px 8px;border-radius:5px;cursor:pointer;" onclick="window.deleteSession(${i})">🗑️</button></div><div class="photos-container">${renderPG(i,'prePhotos',s.prePhotos||[],'前')}<div class="photo-column"><div style="text-align:center;font-size:0.8rem;color:#C79AA5;">墊片型號/備註</div><textarea class="pad-input" onchange="window.updateSessionPad(this, ${i})">${s.padNote||''}</textarea></div>${renderPG(i,'postPhotos',s.postPhotos||[],'後')}</div></div>`;
                 sL.innerHTML+=h;
             });
@@ -965,7 +1176,6 @@
             renderTags();
         };
         
-        // V50: Update Pad Note
         window.updateSessionPad = (el, idx) => {
             const c = clients.find(x => x.id === currentClientId);
             let newSessions = [...c.sessions];
@@ -973,26 +1183,20 @@
             updateDoc(doc(db, "clients", c.firebaseId), { sessions: newSessions });
         };
 
-        // V48: Open Large Modal Logic
         window.openSignatureModal = () => {
             if(!currentClientId) return alert("請先選擇客戶！");
             
             const modal = document.getElementById('signatureModal');
             modal.style.display = 'flex';
             
-            // Wait for modal to render, then resize canvas
             setTimeout(() => {
                 signaturePad = document.getElementById('large-signature-pad');
                 signatureCtx = signaturePad.getContext('2d');
                 signaturePad.width = signaturePad.offsetWidth;
                 signaturePad.height = signaturePad.offsetHeight;
-                
-                // Style
                 signatureCtx.strokeStyle = "#000";
                 signatureCtx.lineWidth = 3;
                 signatureCtx.lineCap = "round";
-                
-                // Events
                 signaturePad.onmousedown = startSign;
                 signaturePad.onmousemove = moveSign;
                 signaturePad.onmouseup = endSign;
@@ -1026,7 +1230,6 @@
             isSigning = false;
         }
 
-        // V48: Confirm & Save
         window.confirmSignature = () => {
             const dataUrl = signaturePad.toDataURL();
             const c = clients.find(x => x.id === currentClientId);
@@ -1034,7 +1237,6 @@
             updateDoc(doc(db, "clients", c.firebaseId), {
                 signature: dataUrl
             }).then(() => {
-                // Update Preview immediately
                 const previewImg = document.getElementById('signature-preview-img');
                 const placeholder = document.getElementById('signature-placeholder');
                 previewImg.src = dataUrl;
@@ -1057,10 +1259,8 @@
             });
         }
         
-        // V47: Clears old small canvas logic references if any remain (Safety)
         window.clearSignature = () => {} 
         
-        // V51: Compression Function
         function compressImage(file) {
             return new Promise((resolve) => {
                 const img = new Image();
@@ -1075,14 +1275,13 @@
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     
-                    resolve(canvas.toDataURL('image/jpeg', 0.6)); // 60% quality
+                    resolve(canvas.toDataURL('image/jpeg', 0.6)); 
                 }
             });
         }
 
         function renderPG(i,k,p,l){let h=`<div class="photo-column"><div style="text-align:center;font-size:0.8rem;color:#C79AA5;">${l}</div><div class="photo-grid">`;p.forEach(u=>h+=`<div class="photo-box has-img" style="background-image:url(${u})"></div>`);if(p.length<3)h+=`<label class="photo-box">+<input type="file" style="display:none" accept="image/*" onchange="window.uploadPhoto(${i},'${k}',this)"></label>`;return h+'</div></div>';}
         
-        // V51: Modified uploadPhoto with compression
         window.uploadPhoto = async (i, k, inp) => {
             if(inp.files[0]) {
                 const compressedDataUrl = await compressImage(inp.files[0]);
@@ -1136,37 +1335,6 @@
                 newSessions.splice(idx, 1);
                 updateDoc(doc(db, "clients", c.firebaseId), { sessions: newSessions });
             }
-        }
-
-        window.deleteTransaction = async (idx) => {
-            if(!confirm("確定刪除此紀錄？將視為退費，並同步刪除日結帳務。")) return;
-
-            const c = clients.find(x => x.id === currentClientId);
-            let newTrans = [...c.transactions];
-            const target = newTrans[idx];
-            let newBal = c.balance || 0;
-            let isModified = false;
-
-            if(target.method.includes("儲值扣")) { const match = target.method.match(/儲值扣\$(\d+)/); if(match) { newBal += parseInt(match[1]); isModified = true; } }
-            if(target.item && target.item.includes("儲值金")) { newBal -= target.amt; isModified = true; }
-            
-            newTrans.splice(idx, 1);
-            let updateData = { transactions: newTrans };
-            if(isModified) updateData.balance = newBal;
-            
-            let newSessions = c.sessions ? [...c.sessions] : [];
-            const sessIdx = newSessions.findIndex(s => s.date.startsWith(target.date) && s.items.join("+") === target.item);
-            if (sessIdx > -1) { newSessions.splice(sessIdx, 1); updateData.sessions = newSessions; }
-
-            await updateDoc(doc(db, "clients", c.firebaseId), updateData);
-
-            const q = query(collection(db, "pos_records"), 
-                where("date", "==", target.date), 
-                where("client", "==", c.name), 
-                where("total", "==", target.amt)
-            );
-            const snap = await getDocs(q);
-            snap.forEach(d => deleteDoc(doc(db, "pos_records", d.id)));
         }
 
         window.jumpToPosWithClient = () => {

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bianca_eye.studio 管理系統 (V55 共享儲值版)</title>
+    <title>Bianca_eye.studio 管理系統 (V61 刪除鍵回歸版)</title>
     <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
         /* --- 核心 CSS --- */
@@ -29,6 +29,7 @@
         .menu-card:hover { transform: scale(1.05) translateY(-5px); box-shadow: 12px 12px 0 var(--dark-pink); background: #FFF0F5; }
         .menu-icon { font-size: 4rem; margin-bottom: 15px; }
         .logout-btn-dash { position: absolute; top: 20px; right: 20px; background: white; color: var(--danger-color); padding: 5px 15px; border-radius: 10px; font-size: 1rem; cursor: pointer; z-index: 100;}
+        .repair-btn { position: absolute; bottom: 20px; right: 20px; background: #666; color: white; padding: 10px; border-radius: 10px; font-size: 0.9rem; z-index:100; }
 
         /* POS 結帳系統 */
         #pos-view { display: none; width: 100%; height: 100%; padding: 20px; box-sizing: border-box; gap: 20px; }
@@ -154,7 +155,7 @@
     <div id="login-overlay">
         <div class="login-box">
             <h2>Bianca<br>Eye Studio</h2>
-            <div style="font-size: 0.9rem; margin-bottom: 15px; color: var(--dark-pink);">✨ V55 共享儲值版</div>
+            <div style="font-size: 0.9rem; margin-bottom: 15px; color: var(--dark-pink);">✨ V61 刪除鍵回歸版</div>
             <input type="email" id="login_email" class="login-input" placeholder="Firebase Email">
             <input type="password" id="login_pwd" class="login-input" placeholder="密碼">
             <button id="btnLogin" class="login-btn">登入系統</button>
@@ -181,6 +182,8 @@
                 <div class="menu-icon">🌝</div><div>月結作業</div>
             </div>
         </div>
+        
+        <button class="repair-btn" onclick="window.runSystemRepair()">🛠️ 執行資料庫健檢與修復</button>
     </div>
 
     <div id="pos-view">
@@ -257,10 +260,17 @@
                         <label style="display:flex;align-items:center;cursor:pointer">
                             <input type="checkbox" id="use_balance" onchange="window.updateCalculations()"> 使用儲值金扣款
                         </label>
-                        <select id="shared_payer" style="margin-left:10px; padding:2px; font-size:0.9rem;" onchange="window.updateCalculations()">
-                            </select>
-                        <span id="deduct_display" style="color:var(--danger-color); margin-left:auto;">-$0</span>
+                        
+                        <div style="margin-left:10px; flex-grow:1;">
+                            <input type="text" id="shared_payer_input" list="shared_payer_list" placeholder="搜尋付款人(預設本人)..." 
+                                   style="width:100%; font-size:0.9rem; padding:2px;" 
+                                   onchange="window.updateCalculations()" oninput="window.updateCalculations()">
+                            <datalist id="shared_payer_list"></datalist>
+                        </div>
+                        
+                        <span id="deduct_display" style="color:var(--danger-color); white-space:nowrap; margin-left:5px;">-$0</span>
                     </div>
+                    <div id="payer_balance_info" style="font-size:0.8rem; color:#666; text-align:right; display:none;"></div>
                 </div>
 
                 <div class="split-pay-row"><span>剩餘應付：</span><span id="remain_display" style="font-weight:bold">$0</span></div>
@@ -460,6 +470,33 @@
         window.toggleSidebar = () => {
             document.getElementById('crmSidebar').classList.toggle('closed');
         }
+        
+        // V60: System Repair Tool
+        window.runSystemRepair = async () => {
+            if(!confirm("確定執行資料庫健檢與修復？\n(這將修正所有客戶的餘額格式錯誤與缺少欄位)")) return;
+            
+            const snap = await getDocs(collection(db, "clients"));
+            let count = 0;
+            snap.forEach(async docSnap => {
+                let data = docSnap.data();
+                let updates = {};
+                let needsUpdate = false;
+                
+                if (typeof data.balance !== 'number' || isNaN(data.balance)) {
+                    updates.balance = parseInt(data.balance) || 0;
+                    needsUpdate = true;
+                }
+                
+                if (!data.transactions) { updates.transactions = []; needsUpdate = true; }
+                if (!data.sessions) { updates.sessions = []; needsUpdate = true; }
+                
+                if (needsUpdate) {
+                    await updateDoc(doc(db, "clients", docSnap.id), updates);
+                    count++;
+                }
+            });
+            alert(`修復完成！共校正了 ${count} 筆資料。`);
+        };
 
         // --- POS Logic ---
         let defaultMenu = {
@@ -488,8 +525,17 @@
                 clients = snap.docs.map(d => ({ firebaseId: d.id, ...d.data() }));
                 window.renderClientList();
                 renderClientDatalist();
-                renderPayerSelect(); // V55: Refresh payers
+                renderPayerSelect(); 
                 
+                if(selectedPosClient) {
+                    const fresh = clients.find(c => c.id === selectedPosClient.id);
+                    if(fresh) {
+                         selectedPosClient = fresh;
+                         document.getElementById('posBalance').innerText = `$${fresh.balance}`;
+                    }
+                }
+                updateCalculations();
+
                 if(window.pendingNewClientId) {
                     const newClient = clients.find(c => c.id === window.pendingNewClientId);
                     if(newClient) {
@@ -503,36 +549,19 @@
             });
         }
         
-        // V55: Populate Payer Dropdown
         function renderPayerSelect() {
-            const select = document.getElementById('shared_payer');
-            if(!select) return;
-            const currentSelection = select.value;
-            select.innerHTML = '';
+            const dl = document.getElementById('shared_payer_list');
+            if(!dl) return;
+            dl.innerHTML = '';
             
-            // If a client is selected in POS, add them first
-            if(selectedPosClient) {
-                const opt = document.createElement('option');
-                opt.value = selectedPosClient.name;
-                opt.innerText = `${selectedPosClient.name} (本人)`;
-                select.appendChild(opt);
-            }
-            
-            // Add other clients with balance > 0
             clients.forEach(c => {
-                if(selectedPosClient && c.id === selectedPosClient.id) return; // Skip self
                 if(c.balance > 0) {
                     const opt = document.createElement('option');
-                    opt.value = c.name;
-                    opt.innerText = `${c.name} (餘額$${c.balance})`;
-                    select.appendChild(opt);
+                    opt.value = c.name; 
+                    opt.innerText = `餘額: $${c.balance}`; 
+                    dl.appendChild(opt);
                 }
             });
-            
-            // Restore selection if possible, else default to self
-            if(currentSelection && Array.from(select.options).some(o => o.value === currentSelection)) {
-                select.value = currentSelection;
-            }
         }
 
         function renderPOS() {
@@ -570,12 +599,16 @@
             const balance = selectedPosClient ? (selectedPosClient.balance || 0) : 0;
             document.getElementById('posBalance').innerText = `$${balance}`;
             
-            if(balance > 0) {
-                document.getElementById('is_member_rate').checked = true;
+            const payerInput = document.getElementById('shared_payer_input');
+            if(selectedPosClient) {
+                payerInput.value = selectedPosClient.name;
+                if(balance > 0) document.getElementById('is_member_rate').checked = true;
+                else document.getElementById('is_member_rate').checked = false;
             } else {
+                payerInput.value = "";
                 document.getElementById('is_member_rate').checked = false;
             }
-            renderPayerSelect(); // V55: Update payer dropdown
+            
             updateCalculations(); 
         }
 
@@ -778,14 +811,24 @@
             if(cart.length===0) list.innerHTML = '<div style="text-align:center;color:#ccc;margin-top:50px;">尚未選擇項目</div>';
 
             const useBal = document.getElementById('use_balance').checked;
-            const balance = selectedPosClient ? (selectedPosClient.balance || 0) : 0;
+            const payerInput = document.getElementById('shared_payer_input');
+            const payerName = payerInput ? payerInput.value : null;
             
-            // V55: Shared Payer Logic
-            const payerName = document.getElementById('shared_payer') ? document.getElementById('shared_payer').value : null;
-            let payerBalance = balance;
-            if(payerName && selectedPosClient && payerName !== selectedPosClient.name) {
-                const payer = clients.find(c => c.name === payerName);
-                if(payer) payerBalance = payer.balance;
+            let payerBalance = 0;
+            let payerClient = null;
+
+            if(payerName) {
+                payerClient = clients.find(c => c.name === payerName);
+                if(payerClient) {
+                    payerBalance = payerClient.balance;
+                    document.getElementById('payer_balance_info').style.display = 'block';
+                    document.getElementById('payer_balance_info').innerText = `付款人餘額：$${payerBalance}`;
+                } else {
+                    document.getElementById('payer_balance_info').style.display = 'block';
+                    document.getElementById('payer_balance_info').innerText = `查無此人`;
+                }
+            } else {
+                document.getElementById('payer_balance_info').style.display = 'none';
             }
 
             let deduct = 0;
@@ -807,12 +850,12 @@
             window.updateCalculations(); 
         };
         
-        // V55: Updated Checkout Logic
+        // V57: Strict Number & Immediate Sync Fix
         window.submitCheckout = () => {
             if(cart.length===0) return alert("購物車空的");
             const name = document.getElementById('pos_client_name').value || "Walk-in";
             
-            let grossTotal = 0, discountMultiplier = 1, topupAmt = 0;
+            let grossTotal = 0, fixedDeductions = 0, discountMultiplier = 1, topupAmt = 0;
             let courseItems = [];
             let catSummary = {};
 
@@ -832,18 +875,25 @@
                     }
                 }
             });
-            let fixedDeductions = cart.filter(i => i.type === 'fixed_discount').reduce((sum, i) => sum + i.val, 0);
+             cart.forEach(i => { if(i.type==='fixed_discount') fixedDeductions += i.val; });
+
             let taxableBase = grossTotal - fixedDeductions;
             let grandTotal = Math.round(taxableBase * discountMultiplier);
             let categoryStr = Object.entries(catSummary).map(([k,v]) => `${k}($${v})`).join(" + ");
 
             const useBal = document.getElementById('use_balance').checked;
-            const payerName = document.getElementById('shared_payer').value;
-            const isShared = useBal && payerName && payerName !== selectedPosClient.name;
+            const payerName = document.getElementById('shared_payer_input').value;
+            let payerClient = null;
+            if(payerName) {
+                payerClient = clients.find(c => c.name === payerName);
+            }
             
-            // Determine Payer
-            let payerClient = isShared ? clients.find(c => c.name === payerName) : selectedPosClient;
-            let payerBalance = payerClient ? (payerClient.balance || 0) : 0;
+            if(useBal && !payerClient) {
+                return alert("找不到指定的付款人，請檢查姓名是否正確！");
+            }
+            
+            const isShared = useBal && selectedPosClient && payerClient && (payerClient.id !== selectedPosClient.id);
+            let payerBalance = payerClient ? (parseInt(payerClient.balance) || 0) : 0;
 
             let deduct = 0;
             if(useBal && grandTotal > 0) deduct = Math.min(grandTotal, payerBalance);
@@ -865,8 +915,8 @@
             }
 
             const localDate = getLocalYMD(); 
-            
-            // 1. Create Main POS Record
+            const refId = Date.now().toString(); 
+
             addDoc(collection(db, "pos_records"), {
                 date: localDate, 
                 timestamp: Date.now(), 
@@ -876,26 +926,37 @@
                 total: grandTotal,
                 method: useBal ? `儲值$${deduct}(${payerClient.name}) + ${payMethod}$${remain}` : payMethod,
                 type: topupAmt > 0 ? 'topup' : 'service',
-                payerId: payerClient ? payerClient.firebaseId : null // Track payer for reversals
-            }).then(() => {
+                payerId: payerClient ? payerClient.firebaseId : null,
+                refId: refId 
+            }).then(async () => {
                 
-                // 2. Update Current Client (Consumer)
+                // 1. Update Consumer (Client A)
                 if(selectedPosClient) {
-                    // If shared payment, current client balance doesn't change (unless topup involved)
-                    let newBal = selectedPosClient.balance;
-                    if(!isShared) newBal = newBal - deduct + topupAmt;
+                    const latestClientASnap = await getDoc(doc(db, "clients", selectedPosClient.firebaseId));
+                    const latestClientA = latestClientASnap.data();
+                    let currentBalA = parseInt(latestClientA.balance) || 0;
+                    
+                    let newBalA = currentBalA;
+                    if(!isShared) {
+                        newBalA = currentBalA - deduct + topupAmt; 
+                    } else {
+                        newBalA = currentBalA + topupAmt;
+                    }
                     
                     const newTrans = {
                         date: localDate, 
                         item: itemsName, 
                         amt: grandTotal,
-                        method: isShared ? `${payerClient.name}(儲)` : (useBal ? `儲值扣$${deduct}` : payMethod)
+                        method: isShared ? `${payerClient.name}(儲)` : (useBal ? `儲值扣$${deduct}` : payMethod),
+                        payerName: isShared ? payerClient.name : null,
+                        payerId: isShared ? payerClient.id : null, 
+                        refId: refId 
                     };
                     
-                    let updates = {
-                        balance: newBal,
+                    await updateDoc(doc(db, "clients", selectedPosClient.firebaseId), {
+                        balance: newBalA,
                         transactions: arrayUnion(newTrans)
-                    };
+                    });
 
                     if(courseItems.length > 0) {
                         const newSession = {
@@ -903,21 +964,29 @@
                             items: courseItems,
                             prePhotos: [], padPhotos: [], postPhotos: []
                         };
-                        updates.sessions = arrayUnion(newSession);
+                        await updateDoc(doc(db, "clients", selectedPosClient.firebaseId), {
+                             sessions: arrayUnion(newSession)
+                        });
                     }
-                    updateDoc(doc(db, "clients", selectedPosClient.firebaseId), updates);
                 }
 
-                // 3. Update Shared Payer (If exists and different)
+                // 2. Update Payer (Client B) if Shared
                 if(isShared && payerClient) {
-                    let newPayerBal = payerClient.balance - deduct;
+                    const latestClientBSnap = await getDoc(doc(db, "clients", payerClient.firebaseId));
+                    const latestClientB = latestClientBSnap.data();
+                    let currentBalB = parseInt(latestClientB.balance) || 0;
+                    
+                    let newPayerBal = currentBalB - deduct;
+                    
                     const payerTrans = {
                         date: localDate,
                         item: `儲值金轉-${selectedPosClient.name}`,
                         amt: -deduct,
-                        method: "轉讓扣款"
+                        method: "轉讓扣款",
+                        refId: refId 
                     };
-                    updateDoc(doc(db, "clients", payerClient.firebaseId), {
+                    
+                    await updateDoc(doc(db, "clients", payerClient.firebaseId), {
                         balance: newPayerBal,
                         transactions: arrayUnion(payerTrans)
                     });
@@ -929,6 +998,7 @@
                 document.getElementById('is_member_rate').checked = false; 
                 selectedPosClient = null;
                 selectedCartIndex = -1; 
+                
                 window.updateCalculations();
             });
         }
@@ -980,7 +1050,7 @@
             });
         }
         
-        // V55: Robust Delete with Cross-Client Refund
+        // V61: Revived Delete Button Logic
         window.deleteDailyRecord = (id) => {
             if(!confirm("確定刪除此筆結帳？(系統將同步刪除客戶消費/課程紀錄並還原餘額)")) return;
             
@@ -988,54 +1058,59 @@
                 if(!snap.empty) {
                     const target = snap.docs[0].data();
                     
-                    // 1. Identify Payer
-                    // Use stored payerId if available (best for shared), else guess by client name
+                    // 1. Restore Payer
                     let payerClient = null;
                     if(target.payerId) {
                         const pSnap = await getDoc(doc(db, "clients", target.payerId));
                         if(pSnap.exists()) payerClient = { firebaseId: pSnap.id, ...pSnap.data() };
                     } 
-                    // Fallback for old records
                     if(!payerClient) payerClient = clients.find(c => c.name === target.client);
 
                     if(payerClient) {
                         let refundAmt = 0;
-                        let isModified = false;
                         
-                        // Parse deduction amount from method string
-                        // Format: "儲值$500..." or "儲值$500(王大明)..."
                         if(target.method.includes("儲值")) {
                            const match = target.method.match(/儲值\$(\d+)/);
                            if(match) refundAmt = parseInt(match[1]);
                         }
                         
-                        // Revert Topup Purchase
                         if(target.items.includes("儲值")) {
-                            // Logic same as V54
                             if (target.items.includes("小資體驗組")) refundAmt -= 3200;
                             else if (target.items.includes("經典亮眼組")) refundAmt -= 5500;
                             else if (target.items.includes("極致寵愛組")) refundAmt -= 11500;
                             else if (target.total > 0 && !target.items.includes("-")) refundAmt -= target.total;
                         }
 
-                        if(refundAmt !== 0) {
-                            payerClient.balance += refundAmt;
-                            // Update Payer Balance
-                            await updateDoc(doc(db, "clients", payerClient.firebaseId), { balance: payerClient.balance });
+                        if(refundAmt !== 0 || target.refId) {
+                            const freshPayer = await getDoc(doc(db, "clients", payerClient.firebaseId));
+                            const freshBal = parseInt(freshPayer.data().balance) || 0;
+                            
+                            let newTransactions = freshPayer.data().transactions || [];
+                            if(target.refId) {
+                                newTransactions = newTransactions.filter(t => t.refId !== target.refId);
+                            }
+
+                            await updateDoc(doc(db, "clients", payerClient.firebaseId), { 
+                                balance: freshBal + refundAmt,
+                                transactions: newTransactions 
+                            });
                         }
-                        
-                        // Remove "Transfer" record from Payer if it was shared
-                        // (Simplified: we just refund money, removing the exact transaction string from array is tricky without unique ID, keeping balance correct is priority)
                     }
 
-                    // 2. Remove Consumer Record (Client A)
+                    // 2. Remove Consumer Record
                     const clientA = clients.find(c => c.name === target.client);
                     if(clientA) {
-                         let newTrans = clientA.transactions.filter(t => !(t.date === target.date && t.amt === target.total));
-                         let newSessions = clientA.sessions.filter(s => !s.date.startsWith(target.date));
+                         const freshA = await getDoc(doc(db, "clients", clientA.firebaseId));
+                         let newTrans = freshA.data().transactions || [];
                          
-                         // Note: If Client A == Payer, balance is already updated above. 
-                         // Just save arrays here.
+                         if(target.refId) {
+                             newTrans = newTrans.filter(t => t.refId !== target.refId);
+                         } else {
+                             newTrans = newTrans.filter(t => !(t.date === target.date && t.amt === target.total));
+                         }
+                         
+                         let newSessions = (freshA.data().sessions || []).filter(s => !s.date.startsWith(target.date));
+                         
                          await updateDoc(doc(db, "clients", clientA.firebaseId), {
                              transactions: newTrans,
                              sessions: newSessions
@@ -1110,7 +1185,7 @@
                     });
                     l.appendChild(li);
                 }
-            });
+            })
             document.getElementById('clientTotalCount').innerText = `👥 列表人數：${count} 人`;
         };
         
@@ -1122,7 +1197,6 @@
             
             document.querySelectorAll('input[type="checkbox"]').forEach(el => el.checked = false);
             
-            // V54: Auto-clear placeholder
             if(c.name === "新客") {
                 document.getElementById('p_name').value = "";
                 document.getElementById('p_name').placeholder = "請輸入姓名";
@@ -1171,7 +1245,10 @@
             
             const bL=document.getElementById('billingList');bL.innerHTML='';
             if(c.transactions)c.transactions.forEach((t, i)=>{
-                bL.innerHTML+=`<tr><td>${t.date}</td><td>${t.item}</td><td>$${t.amt}</td><td><button class="delete-btn" onclick="window.deleteTransaction(${i})">🗑️</button></td></tr>`;
+                let amtDisplay = `$${t.amt}`;
+                if(t.payerName) amtDisplay += `<br><small style='color:var(--expense-color)'>${t.payerName}(儲)</small>`;
+                // V61: Restore Delete Button Here
+                bL.innerHTML+=`<tr><td>${t.date}</td><td>${t.item}</td><td>${amtDisplay}</td><td><button class="delete-btn" onclick="window.deleteTransaction(${i})">🗑️</button></td></tr>`;
             });
             renderTags();
         };
@@ -1335,6 +1412,71 @@
                 newSessions.splice(idx, 1);
                 updateDoc(doc(db, "clients", c.firebaseId), { sessions: newSessions });
             }
+        }
+
+        // V61: Revived Delete Transaction
+        window.deleteTransaction = async (idx) => {
+            if(!confirm("確定刪除此紀錄？將視為退費，並同步刪除日結帳務。")) return;
+
+            const c = clients.find(x => x.id === currentClientId);
+            const target = c.transactions[idx];
+            let newBal = parseInt(c.balance) || 0;
+
+            // Revert Self Top-up Purchase
+            if(target.item.includes("儲值") && !target.item.includes("轉")) {
+                let deductAmount = 0;
+                if (target.item.includes("小資體驗組")) deductAmount = 3200;
+                else if (target.item.includes("經典亮眼組")) deductAmount = 5500;
+                else if (target.item.includes("極致寵愛組")) deductAmount = 11500;
+                else if (target.amt > 0) deductAmount = target.amt;
+                
+                newBal -= deductAmount;
+            }
+
+            // Handle Shared Refund (Payer Restoration)
+            if(target.refId) {
+                const allClients = await getDocs(collection(db, "clients"));
+                allClients.forEach(async (docSnap) => {
+                    const clientData = docSnap.data();
+                    if(clientData.id === c.id) return; 
+
+                    const linkedTrans = clientData.transactions ? clientData.transactions.find(t => t.refId === target.refId) : null;
+                    if(linkedTrans) {
+                        const refundAmt = Math.abs(linkedTrans.amt);
+                        const updatedBalance = (parseInt(clientData.balance) || 0) + refundAmt;
+                        const updatedTrans = clientData.transactions.filter(t => t.refId !== target.refId);
+                        
+                        await updateDoc(doc(db, "clients", docSnap.id), {
+                            balance: updatedBalance,
+                            transactions: updatedTrans
+                        });
+                        alert(`已連動退還付款人 [${clientData.name}] 之餘額 $${refundAmt}`);
+                    }
+                });
+                
+                // Delete from POS Records
+                const q = query(collection(db, "pos_records"), where("refId", "==", target.refId));
+                const snap = await getDocs(q);
+                snap.forEach(d => deleteDoc(doc(db, "pos_records", d.id)));
+            } else {
+                 const q = query(collection(db, "pos_records"), 
+                    where("date", "==", target.date), 
+                    where("client", "==", c.name), 
+                    where("total", "==", target.amt)
+                );
+                const snap = await getDocs(q);
+                snap.forEach(d => deleteDoc(doc(db, "pos_records", d.id)));
+            }
+
+            // Remove from current client
+            let newTrans = c.transactions.filter((t, i) => i !== idx);
+            let newSessions = c.sessions.filter(s => !target.date.startsWith(s.date.split(' ')[0]));
+
+            await updateDoc(doc(db, "clients", c.firebaseId), {
+                transactions: newTrans,
+                balance: newBal,
+                sessions: newSessions
+            });
         }
 
         window.jumpToPosWithClient = () => {

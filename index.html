@@ -3,38 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bianca_eye.studio 管理系統 (V77 完整復原版)</title>
+    <title>Bianca_eye.studio 管理系統 (V94 自動入帳版)</title>
     <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
-        /* --- 核心 CSS --- */
+        /* --- 核心 CSS (維持 V82/V92 樣式) --- */
         :root { --bg-color: #Fdfbfb; --main-pink: #EAC8D0; --dark-pink: #C79AA5; --text-color: #6D6063; --card-bg: #FFFFFF; --shadow: 4px 4px 0px #EAC8D0; --danger-color: #CD5C5C; --success-color: #2E8B57; --highlight-color: #FF69B4; --blue-color: #4682B4; --expense-color: #8B4513; --member-gold: #DAA520; --topup-color: #20B2AA; --package-color: #9370DB; }
         body { font-family: 'Gaegu', "微軟正黑體", sans-serif; background-color: var(--bg-color); background-image: radial-gradient(#EAC8D0 1px, transparent 1px); background-size: 20px 20px; color: var(--text-color); margin: 0; padding: 0; height: 100vh; overflow: hidden; }
         ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; } ::-webkit-scrollbar-thumb { background: var(--dark-pink); border-radius: 4px; } ::-webkit-scrollbar-thumb:hover { background: #a86e7b; }
         button { font-family: inherit; cursor: pointer; border: 2px solid var(--text-color); transition: 0.2s; }
         button:hover { transform: translateY(-2px); box-shadow: 2px 2px 0 var(--text-color); }
+        input, select, textarea { border: 2px solid var(--main-pink); border-radius: 8px; padding: 5px; font-family: inherit; outline: none; color: var(--text-color); pointer-events: auto !important; z-index: 50; position: relative; background-color: white; }
         
-        /* 輸入框強制顯現與互動修復 */
-        input, select, textarea { 
-            border: 2px solid var(--main-pink); 
-            border-radius: 8px; 
-            padding: 5px; 
-            font-family: inherit; 
-            outline: none; 
-            color: var(--text-color);
-            pointer-events: auto !important; /* 強制可點擊 */
-            z-index: 50; /* 浮在最上層 */
-            position: relative; 
-            background-color: white; 
-        }
-        
-        /* 登入畫面 */
         #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #Fdfbfb; background-image: radial-gradient(#EAC8D0 1px, transparent 1px); background-size: 20px 20px; z-index: 9999; display: flex; justify-content: center; align-items: center; }
         .login-box { background: white; padding: 40px; border-radius: 20px; border: 3px solid var(--text-color); box-shadow: 8px 8px 0 var(--main-pink); text-align: center; width: 300px; }
         .login-input { width: 100%; padding: 10px; margin-bottom: 15px; box-sizing: border-box; font-size: 1.1rem; }
         .login-btn { background: var(--dark-pink); color: white; padding: 10px 30px; border-radius: 10px; font-size: 1.2rem; width: 100%; }
         .login-error { color: var(--danger-color); margin-top: 10px; font-weight: bold; display: none; }
 
-        /* 主選單 */
         #dashboard-view { display: none; width: 100%; height: 100%; justify-content: center; align-items: center; gap: 40px; flex-direction: column; }
         .dashboard-title { font-size: 3rem; font-weight: bold; color: var(--dark-pink); margin-bottom: 20px; text-shadow: 2px 2px 0 #fff; }
         .menu-container { display: flex; gap: 30px; }
@@ -42,37 +27,26 @@
         .menu-card:hover { transform: scale(1.05) translateY(-5px); box-shadow: 12px 12px 0 var(--dark-pink); background: #FFF0F5; }
         .menu-icon { font-size: 4rem; margin-bottom: 15px; }
         .logout-btn-dash { position: absolute; top: 20px; right: 20px; background: white; color: var(--danger-color); padding: 5px 15px; border-radius: 10px; font-size: 1rem; cursor: pointer; z-index: 100;}
-        .repair-btn { position: absolute; bottom: 20px; right: 20px; background: #666; color: white; padding: 10px 20px; border-radius: 10px; font-size: 1rem; cursor: pointer; z-index:100; border: 2px solid #444; }
+        .repair-btn { position: absolute; bottom: 20px; right: 20px; background: #666; color: white; padding: 10px 20px; border-radius: 10px; font-size: 0.9rem; z-index:100; border: 2px solid #444; }
 
-        /* POS 結帳系統 */
         #pos-view { display: none; width: 100%; height: 100%; padding: 20px; box-sizing: border-box; gap: 20px; }
         .pos-left { flex: 6; background: white; border: 2px solid var(--text-color); border-radius: 20px; padding: 20px; display: flex; flex-direction: column; box-shadow: var(--shadow); overflow-y: auto; }
         .pos-right { flex: 4; background: #FFF0F5; border: 2px solid var(--text-color); border-radius: 20px; padding: 20px; display: flex; flex-direction: column; box-shadow: var(--shadow); position: relative;}
         .pos-header { font-size: 1.5rem; font-weight: bold; margin-bottom: 15px; color: var(--dark-pink); display: flex; justify-content: space-between; align-items: center; }
-        
         .category-section { margin-bottom: 25px; border-bottom: 2px dashed #eee; padding-bottom: 15px; }
         .category-title { font-size: 1.2rem; font-weight: bold; color: var(--text-color); margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
         .items-grid { display: flex; flex-wrap: wrap; gap: 10px; }
-        .item-btn { 
-            background: white; border: 2px solid var(--main-pink); border-radius: 10px; padding: 10px; 
-            width: 120px; height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            transition: 0.2s; text-align: center; cursor: pointer; font-size: 1rem;
-        }
+        .item-btn { background: white; border: 2px solid var(--main-pink); border-radius: 10px; padding: 10px; width: 120px; height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.2s; text-align: center; cursor: pointer; font-size: 1rem; }
         .item-btn:hover { background: var(--main-pink); color: white; transform: scale(1.05); }
         .item-btn.special { border-style: dashed; background: #fafafa; }
-
         .cart-list { flex-grow: 1; overflow-y: auto; background: white; border: 2px solid var(--main-pink); border-radius: 10px; padding: 10px; margin-bottom: 15px; }
         .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px dashed #eee; font-size: 1.1rem; cursor: pointer; border-left: 5px solid transparent; }
         .cart-item.active-item { background-color: #FFF0F5; border-left: 5px solid var(--highlight-color); }
         .cart-item.member-price { background-color: #FFF8DC; border-left: 5px solid var(--member-gold); }
         .cart-item.package-item { background-color: #E6E6FA; border-left: 5px solid var(--package-color); }
-
         .cart-remove { color: var(--danger-color); cursor: pointer; margin-left: 10px; font-weight: bold; }
-        .auto-discount-tag { color: var(--highlight-color); font-size: 0.8rem; display: block; margin-top: 2px; font-weight: bold;}
         .first-time-badge { background: var(--highlight-color); color: white; padding: 2px 5px; border-radius: 4px; font-size: 0.8rem; margin-left: 5px; }
         .receipt-time { font-size: 1.1rem; color: var(--text-color); text-align: right; margin-bottom: 5px; font-weight: bold; }
-
-        /* 餘額與支付區塊 */
         .balance-display { background: #fff; border: 2px dashed var(--main-pink); padding: 10px; margin-bottom: 15px; border-radius: 10px; text-align: center; color: var(--text-color); font-size: 1.1rem; }
         .balance-amount { color: var(--success-color); font-weight: bold; font-size: 1.3rem; }
         .calc-area { background: white; padding: 15px; border-radius: 15px; border: 2px solid var(--text-color); }
@@ -80,10 +54,21 @@
         .split-pay-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 1.1rem; }
         .checkout-btn { background: var(--dark-pink); color: white; width: 100%; padding: 15px; font-size: 1.5rem; border-radius: 10px; border: 2px solid var(--text-color); margin-top: 10px; }
         .back-home-btn { background: #eee; padding: 5px 10px; border-radius: 5px; font-size: 0.9rem; }
-        
         .member-check-wrapper { background: #FFF8DC; border: 1px solid #DAA520; padding: 5px 10px; border-radius: 8px; margin-top: 5px; display: inline-block; color: #B8860B; font-weight: bold; width: 100%; box-sizing: border-box;}
 
-        /* 報表系統 */
+        /* V86 票券樣式 */
+        .package-wallet { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+        .ticket-card { background: linear-gradient(135deg, #fff 0%, #f3e7e9 100%); border: 2px solid #EAC8D0; border-radius: 12px; padding: 15px; width: 100%; box-shadow: 2px 2px 5px rgba(0,0,0,0.05); position: relative; overflow: hidden; transition: 0.2s; box-sizing: border-box; }
+        .ticket-card:hover { transform: translateY(-2px); box-shadow: 4px 4px 10px rgba(0,0,0,0.1); border-color: #C79AA5; }
+        .ticket-left { float: left; width: 25%; text-align: center; border-right: 2px dashed #C79AA5; padding-right: 10px; margin-right: 10px; display:flex; flex-direction:column; justify-content:center; height: 100%; }
+        .ticket-count { font-size: 2.5rem; font-weight: bold; color: #CD5C5C; line-height: 1; }
+        .ticket-label { font-size: 0.8rem; color: #666; }
+        .ticket-right { overflow: hidden; }
+        .ticket-name { font-weight: bold; font-size: 1.1rem; color: #333; margin-bottom: 5px; }
+        .ticket-actions { display: flex; gap: 5px; margin-top: 8px; }
+        .btn-use { background-color: #2E8B57; color: white; border: none; border-radius: 5px; padding: 5px 10px; font-size: 0.9rem; flex: 1; cursor: pointer;}
+        .btn-share { background-color: #4682B4; color: white; border: none; border-radius: 5px; padding: 5px 10px; font-size: 0.9rem; flex: 1; cursor: pointer;}
+
         .full-view { display: none; width: 100%; height: 100%; gap: 20px; padding: 20px; box-sizing: border-box; }
         .report-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         .report-table th, .report-table td { text-align: left; padding: 8px; border-bottom: 1px dashed var(--main-pink); font-size: 1.1rem; }
@@ -91,43 +76,19 @@
         .report-table tr.clickable:hover { background-color: #f0f0f0; } 
         .report-footer { margin-top: 20px; font-size: 1.5rem; font-weight: bold; text-align: right; color: var(--dark-pink); border-top: 2px solid var(--text-color); padding-top: 10px;}
 
-        /* CRM 客戶管理 */
         #crm-view { position: relative; height: 100%; display: flex; flex-direction: row; } 
-        .sidebar { 
-            width: 250px; background: var(--card-bg); border: 2px solid var(--text-color); border-radius: 15px 255px 15px 25px / 255px 15px 225px 15px; padding: 20px; 
-            box-shadow: var(--shadow); display: flex; flex-direction: column; height: 100%; box-sizing: border-box; 
-            transition: all 0.3s ease; overflow: hidden; opacity: 1; flex-shrink: 0; 
-            z-index: 100; /* V71: Force Top */
-            position: relative;
-        }
+        .sidebar { width: 250px; background: var(--card-bg); border: 2px solid var(--text-color); border-radius: 15px 255px 15px 25px / 255px 15px 225px 15px; padding: 20px; box-shadow: var(--shadow); display: flex; flex-direction: column; height: 100%; box-sizing: border-box; transition: all 0.3s ease; overflow: hidden; opacity: 1; flex-shrink: 0; z-index: 100; position: relative; }
         .sidebar.closed { width: 0; padding: 0; border: none; opacity: 0; margin-right: 0; }
-        
-        .toggle-side-btn {
-            position: absolute; top: 10px; left: 10px; z-index: 200;
-            background: var(--dark-pink); color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;
-        }
-
+        .toggle-side-btn { position: absolute; top: 10px; left: 10px; z-index: 200; background: var(--dark-pink); color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
         .main-container { flex-grow: 1; display: flex; flex-direction: column; height: 100%; overflow: hidden; padding-left: 20px; position: relative; z-index: 5; }
         .client-list { list-style: none; padding: 0; overflow-y: auto; flex-grow: 1; }
-        
-        .client-item { 
-            padding: 10px; border-bottom: 1px dashed var(--main-pink); 
-            font-size: 1.2rem; display: flex; justify-content: space-between; align-items: center; 
-            transition: 0.2s; white-space: nowrap; 
-            cursor: pointer !important; 
-            pointer-events: auto !important; 
-            position: relative;
-            z-index: 101; 
-        }
+        .client-item { padding: 10px; border-bottom: 1px dashed var(--main-pink); font-size: 1.2rem; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; white-space: nowrap; cursor: pointer !important; pointer-events: auto !important; position: relative; z-index: 101; }
         .client-item:hover { background-color: #f9f9f9; transform: translateX(5px); }
         .client-item.active { background-color: #FFF0F5; font-weight: bold; border-left: 5px solid var(--dark-pink); }
-        
         .content-card { background: var(--card-bg); border: 2px solid var(--text-color); border-radius: 0 15px 15px 15px; box-shadow: var(--shadow); padding: 20px; flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; z-index: 5; }
-        
         .tabs-header { display: flex; gap: 5px; padding-left: 10px; margin-bottom: -2px; z-index: 30; position: relative; pointer-events: none;}
         .tab-btn { pointer-events: auto; background: #f0f0f0; border: 2px solid var(--text-color); border-bottom: none; padding: 8px 20px; font-size: 1.2rem; cursor: pointer; border-radius: 15px 15px 0 0; color: var(--text-color); position: relative; top: 2px; }
         .tab-btn.active { background: var(--card-bg); font-weight: bold; color: var(--dark-pink); top: 0; padding-bottom: 10px; box-shadow: 0 -2px 0 var(--main-pink) inset; }
-        
         .tab-content { display: none; height: 100%; flex-direction: column; overflow: hidden; position: relative; z-index: 10; }
         .tab-content.active { display: flex; }
         .scroll-container { overflow-y: auto; flex-grow: 1; padding-right: 10px; display: flex; flex-direction: column; gap: 20px; }
@@ -144,16 +105,13 @@
         .close-btn { float: right; cursor: pointer; font-weight: bold; font-size: 1.2rem; }
         .btn-save { background: var(--dark-pink); width: 100%; font-size: 1.2rem; margin-top: 20px; color: white; border: none; padding: 10px; border-radius: 10px; cursor: pointer;}
         
-        /* Others */
         .photos-container { display: flex; gap: 10px; margin-top: 10px; }
         .photo-column { flex: 1; background: #fff; padding: 10px; border-radius: 10px; border: 1px dashed var(--main-pink); }
         .photo-grid { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; }
         .photo-box { width: 60px; height: 60px; border: 2px dashed #ccc; display: flex; align-items: center; justify-content: center; background-size: cover; cursor: pointer; border-radius: 8px; position:relative;}
         .photo-box.has-img { border: 2px solid var(--dark-pink); cursor: default; }
-        
         .pad-input { width: 100%; height: 60px; border: 2px dashed #ccc; border-radius: 8px; padding: 5px; resize: none; font-family: inherit; font-size: 0.9rem; box-sizing: border-box; }
         .pad-input:focus { border-color: var(--dark-pink); outline:none; }
-
         .tags-container { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
         .tag-chip { padding: 5px 15px; border: 2px solid var(--main-pink); border-radius: 20px; cursor: pointer; font-size: 1rem; transition: 0.2s; }
         .tag-chip.active { background: var(--main-pink); color: white; border-color: var(--dark-pink); }
@@ -162,19 +120,11 @@
         .agree-label input { margin-top: 5px; flex-shrink: 0; }
         input[type="checkbox"] { transform: scale(1.2); accent-color: var(--dark-pink); }
         
-        #signature-preview-box {
-            border: 2px dashed var(--main-pink); border-radius: 10px; background: #fff; width: 100%; height: 100px;
-            display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer;
-            overflow: hidden; transition: 0.2s;
-        }
+        #signature-preview-box { border: 2px dashed var(--main-pink); border-radius: 10px; background: #fff; width: 100%; height: 100px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; transition: 0.2s; }
         #signature-preview-box:hover { background: #FFF0F5; border-color: var(--dark-pink); }
         #signature-preview-img { max-width: 100%; max-height: 100%; object-fit: contain; display: none; }
         #signature-placeholder { color: var(--dark-pink); font-weight: bold; }
         #signature-pad { border: 2px dashed var(--text-color); border-radius: 10px; background: #fff; width: 100%; height: 150px; cursor: crosshair; touch-action: none; }
-        
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { text-align: left; padding: 8px; border-bottom: 1px dashed var(--main-pink); }
-        th { color: var(--dark-pink); background: #FFF0F5;}
     </style>
 </head>
 <body>
@@ -182,7 +132,7 @@
     <div id="login-overlay">
         <div class="login-box">
             <h2>Bianca<br>Eye Studio</h2>
-            <div style="font-size: 0.9rem; margin-bottom: 15px; color: var(--dark-pink);">✨ V77 完整復原版</div>
+            <div style="font-size: 0.9rem; margin-bottom: 15px; color: var(--dark-pink);">✨ V94 自動入帳版</div>
             <input type="email" id="login_email" class="login-input" placeholder="Firebase Email">
             <input type="password" id="login_pwd" class="login-input" placeholder="密碼">
             <button id="btnLogin" class="login-btn">登入系統</button>
@@ -209,7 +159,6 @@
                 <div class="menu-icon">🌝</div><div>月結作業</div>
             </div>
         </div>
-        
         <button class="repair-btn" onclick="window.runSystemRepair()">🛠️ 執行資料庫健檢與修復</button>
     </div>
 
@@ -232,7 +181,21 @@
             <div class="cart-list" id="cartList"><div style="text-align:center; color:#ccc; margin-top:50px;">尚未選擇項目</div></div>
             <div class="calc-area">
                 <div class="total-row"><span>總金額：</span><span id="posTotal">$0</span></div>
-                <div style="margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:10px;"><div class="split-pay-row"><label style="display:flex;align-items:center;cursor:pointer"><input type="checkbox" id="use_balance" onchange="window.updateCalculations()"> 使用儲值金扣款</label><div style="margin-left:10px; flex-grow:1;"><input type="text" id="shared_payer_input" list="shared_payer_list" placeholder="搜尋付款人(預設本人)..." style="width:100%; font-size:0.9rem; padding:2px;" onchange="window.updateCalculations()" oninput="window.updateCalculations()"><datalist id="shared_payer_list"></datalist></div></div><div class="split-pay-row" style="margin-top:5px;"><label style="display:flex;align-items:center;width:100%;gap:10px;"><span style="white-space:nowrap;">支付模式：</span><select id="payment_mode" style="flex-grow:1; font-size:1rem;" onchange="window.updateCalculations()"><option value="cash">💵 一般支付 (現金/匯款)</option><option value="balance">💰 使用儲值金 (扣餘額)</option><option value="package">🎟️ 使用包堂堂數</option></select></label></div><div id="package_select_area" style="display:none; margin-top:5px;"><select id="package_selector" style="width:100%; font-size:0.9rem; color:var(--package-color); border-color:var(--package-color);" onchange="window.updateCalculations()"></select></div><div id="payer_balance_info" style="font-size:0.8rem; color:#666; text-align:right; display:none;"></div><div id="deduct_display" style="text-align:right; color:var(--danger-color); font-weight:bold; margin-top:5px;"></div></div>
+                <div style="margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:10px;">
+                    <div class="split-pay-row">
+                        <label style="display:flex;align-items:center;cursor:pointer"><input type="checkbox" id="use_balance" onchange="window.updateCalculations()"> 使用儲值金扣款</label>
+                        <div style="margin-left:10px; flex-grow:1;"><input type="text" id="shared_payer_input" list="shared_payer_list" placeholder="搜尋付款人(預設本人)..." style="width:100%; font-size:0.9rem; padding:2px;" onchange="window.updateCalculations()" oninput="window.updateCalculations()"><datalist id="shared_payer_list"></datalist></div>
+                    </div>
+                    <div class="split-pay-row" style="margin-top:5px;">
+                        <label style="display:flex;align-items:center;width:100%;gap:10px;"><span style="white-space:nowrap;">支付模式：</span><select id="payment_mode" style="flex-grow:1; font-size:1rem;" onchange="window.updateCalculations()"><option value="cash">💵 一般支付 (現金/匯款)</option><option value="balance">💰 使用儲值金 (扣餘額)</option><option value="package">🎟️ 使用包堂堂數</option></select></label>
+                    </div>
+                    <div id="package_select_area" style="display:none; margin-top:5px;">
+                        <input type="text" id="package_owner_input" placeholder="輸入包堂持有者姓名..." list="client_list_suggestions" oninput="window.checkPackageOwner(this.value)" style="width:100%; margin-bottom:5px;">
+                        <select id="package_selector" style="width:100%; font-size:0.9rem; color:var(--package-color); border-color:var(--package-color);" onchange="window.addPackageToCartFromSelector()"></select>
+                    </div>
+                    <div id="payer_balance_info" style="font-size:0.8rem; color:#666; text-align:right; display:none;"></div>
+                    <div id="deduct_display" style="text-align:right; color:var(--danger-color); font-weight:bold; margin-top:5px;"></div>
+                </div>
                 <div class="split-pay-row"><span>剩餘應付：</span><span id="remain_display" style="font-weight:bold">$0</span></div>
                 <div class="form-row" id="final_pay_method_row"><label>餘額支付：<select id="pos_method" style="flex-grow:1;"><option>現金</option><option>匯款</option><option>全支付</option></select></label></div>
                 <button class="checkout-btn" onclick="window.submitCheckout()">💰 確認結帳</button>
@@ -267,7 +230,18 @@
                             <label><input type="checkbox" data-key="source_neighbor"> 社區鄰居 <input type="text" class="inline-input" id="p_neighbor_unit" placeholder="戶號 (如11F-3)" oninput="window.debounceSaveProfile()"></label>
                             </div></div>
                         </div></div>
-                        <div class="form-section"><div class="form-header">眼部狀況 & 習慣</div><div class="form-body"><div class="form-row"><label>睫毛狀況：</label><div class="checkbox-group"><label><input type="checkbox" data-key="lash_short"> 短</label><label><input type="checkbox" data-key="lash_med"> 中</label><label><input type="checkbox" data-key="lash_long"> 長</label><label><input type="checkbox" data-key="lash_thick"> 濃</label><label><input type="checkbox" data-key="lash_thin"> 稀疏</label></div></div><div class="form-row"><label>眼型：</label><div class="checkbox-group"><label><input type="checkbox" data-key="eye_size"> 大小眼</label><label><input type="checkbox" data-key="eye_single"> 單眼皮</label><label><input type="checkbox" data-key="eye_inner"> 內雙</label><label><input type="checkbox" data-key="eye_double"> 雙眼皮</label><label><input type="checkbox" data-key="eye_puffy"> 泡泡眼</label><label><input type="checkbox" data-key="eye_down"> 睫毛下垂</label><label><input type="checkbox" data-key="eye_inverse"> 睫毛倒插</label></div></div><div class="form-row"><label>眼睛疾病：<input type="text" id="p_disease" placeholder="無 / 有，請說明" oninput="window.debounceSaveProfile()"></label></div><div class="form-row"><label>是否懷孕：<input type="checkbox" data-key="preg_no"> 無 <input type="checkbox" data-key="preg_yes"> 有</label></div><div class="form-row"><label>是否過敏：<input type="checkbox" data-key="allergy_no"> 無 <input type="checkbox" data-key="allergy_dye"> 染髮 <input type="checkbox" data-key="allergy_latex"> 乳膠 其他 <input type="text" id="p_allergy_other" style="width:100px" oninput="window.debounceSaveProfile()"></label></div><div class="form-row"><label>有無操作過：<input type="text" id="p_exp" placeholder="無 / 有，大約幾次" oninput="window.debounceSaveProfile()"></label></div><div class="form-row"><label>保養習慣：<input type="text" id="p_habit" placeholder="無 / 有，使用產品" oninput="window.debounceSaveProfile()"></label></div><div class="form-row"><label>上妝習慣：<input type="checkbox" data-key="makeup_light"> 淡妝 <input type="checkbox" data-key="makeup_heavy"> 濃妝 <input type="checkbox" data-key="makeup_eye"> 著重眼妝</label></div></div></div>
+
+                        <div class="form-section"><div class="form-header">眼部狀況 & 習慣</div><div class="form-body">
+                            <div class="form-row"><label>睫毛狀況：</label><div class="checkbox-group"><label><input type="checkbox" data-key="lash_short"> 短</label><label><input type="checkbox" data-key="lash_med"> 中</label><label><input type="checkbox" data-key="lash_long"> 長</label><label><input type="checkbox" data-key="lash_thick"> 濃</label><label><input type="checkbox" data-key="lash_thin"> 稀疏</label></div></div>
+                            <div class="form-row"><label>眼型：</label><div class="checkbox-group"><label><input type="checkbox" data-key="eye_size"> 大小眼</label><label><input type="checkbox" data-key="eye_single"> 單眼皮</label><label><input type="checkbox" data-key="eye_inner"> 內雙</label><label><input type="checkbox" data-key="eye_double"> 雙眼皮</label><label><input type="checkbox" data-key="eye_puffy"> 泡泡眼</label><label><input type="checkbox" data-key="eye_down"> 睫毛下垂</label><label><input type="checkbox" data-key="eye_inverse"> 睫毛倒插</label></div></div>
+                            <div class="form-row"><label>眼睛疾病：<input type="text" id="p_disease" placeholder="無 / 有，請說明" oninput="window.debounceSaveProfile()"></label></div>
+                            <div class="form-row"><label>是否懷孕：<input type="checkbox" data-key="preg_no"> 無 <input type="checkbox" data-key="preg_yes"> 有</label></div>
+                            <div class="form-row"><label>是否過敏：<input type="checkbox" data-key="allergy_no"> 無 <input type="checkbox" data-key="allergy_dye"> 染髮 <input type="checkbox" data-key="allergy_latex"> 乳膠 其他 <input type="text" id="p_allergy_other" style="width:100px" oninput="window.debounceSaveProfile()"></label></div>
+                            <div class="form-row"><label>有無操作過：<input type="text" id="p_exp" placeholder="無 / 有，大約幾次" oninput="window.debounceSaveProfile()"></label></div>
+                            <div class="form-row"><label>保養習慣：<input type="text" id="p_habit" placeholder="無 / 有，使用產品" oninput="window.debounceSaveProfile()"></label></div>
+                            <div class="form-row"><label>上妝習慣：<input type="checkbox" data-key="makeup_light"> 淡妝 <input type="checkbox" data-key="makeup_heavy"> 濃妝 <input type="checkbox" data-key="makeup_eye"> 著重眼妝</label></div>
+                        </div></div>
+
                         <div class="form-section"><div class="form-header">同意書 & 簽名</div><div class="form-body">
                             <label class="agree-label"><input type="checkbox" data-key="agree_1"> <span>我知道本身有任何過敏或眼睛不適現象，我將事先告知服務人員，並了解由於每個人體質不同，自知悉店家服務所使用之產品均經過合格認證，且服務人員均經過合格技術鑑定，若因個人體質關係或衛生問題產生不適現象，服務店家可享有免責權。</span></label>
                             <label class="agree-label"><input type="checkbox" data-key="agree_2"> <span>我知道睫毛管理後，因每個人的習慣跟保養方式不同，睫毛生長速度也不盡相同，故店家無法提供任何的保固期，其他問題可直接與店家聯繫，店家將誠心協助。</span></label>
@@ -283,7 +257,8 @@
                         <button type="button" class="btn-save" onclick="window.saveProfile()">💾 更新資料至雲端</button>
                     </div>
                 </div>
-                <div id="sessions" class="tab-content"><div id="packageDisplayArea"></div><div style="text-align:right;margin-bottom:10px;"><button class="add-btn" onclick="window.openSessionModal()">+ 新增課程</button></div><div id="sessionList" style="overflow-y:auto;flex-grow:1;"></div></div>
+
+                <div id="sessions" class="tab-content"><div id="packageDisplayArea"></div><div id="sessionList" style="overflow-y:auto;flex-grow:1;"></div></div>
                 <div id="billing" class="tab-content"><div style="text-align:right;margin-bottom:10px;"><button class="add-btn" onclick="window.jumpToPosWithClient()">+ 新增消費 (前往結帳)</button></div><div style="overflow-y:auto;flex-grow:1;"><table><thead><tr><th>日期</th><th>項目</th><th>金額</th><th>操作</th></tr></thead><tbody id="billingList"></tbody></table></div></div>
                 <div id="notes" class="tab-content"><h3>📌 標籤</h3><div class="tags-container" id="tagList"></div><div class="add-tag-wrapper"><input type="text" id="new_tag_input" placeholder="新標籤"><button class="add-btn" onclick="window.addNewCustomTag()">+ 自訂</button></div><h3>📝 備註</h3><textarea id="clientNotes" style="width:100%;height:200px;border:2px solid var(--main-pink);" oninput="window.debounceSaveProfile()"></textarea><button type="button" class="btn-save" onclick="window.saveProfile()">💾 更新備註</button></div>
             </div>
@@ -298,46 +273,32 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, updateDoc, doc, onSnapshot, query, orderBy, where, getDocs, deleteDoc, arrayUnion, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, updateDoc, doc, getDoc, getDocs, deleteDoc, onSnapshot, query, orderBy, where, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = { apiKey: "AIzaSyDOmZLFPtI6v7BpyoLuMG38XWM1PYZaVZE", authDomain: "bianca-customer.firebaseapp.com", projectId: "bianca-customer", storageBucket: "bianca-customer.firebasestorage.app", messagingSenderId: "200747670160", appId: "1:200747670160:web:e1f03edddd2eb17ecad615", measurementId: "G-EB2Z7H77BT" };
         const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app);
         const VIP_PRICES = { 'LASH_UP': 850, 'LASH_DOWN': 300, 'BROW': 850 };
         const views = { login: 'login-overlay', dashboard: 'dashboard-view', pos: 'pos-view', crm: 'crm-view', daily: 'daily-view', monthly: 'monthly-view' };
         
+        window.selectClient = (id) => { window.loadClient(id); window.renderClientList(); }
         window.showView = (name) => { Object.values(views).forEach(id => document.getElementById(id).style.display = 'none'); const target = document.getElementById(views[name]); if(target) target.style.display = (name === 'login' || name === 'dashboard') ? 'flex' : 'flex'; }
         window.goToDashboard = () => window.showView('dashboard'); window.goToPOS = () => { window.showView('pos'); renderPOS(); renderClientDatalist(); }; window.goToCRM = () => window.showView('crm'); window.goToDaily = (targetDate) => { window.showView('daily'); renderDailyReport(targetDate); }; window.goToMonthly = () => { window.showView('monthly'); const today = new Date(); const yyyy = today.getFullYear(); const mm = String(today.getMonth() + 1).padStart(2, '0'); document.getElementById('monthlyPicker').value = `${yyyy}-${mm}`; renderMonthlyReport(); };
         onAuthStateChanged(auth, (user) => { if (user) { window.showView('dashboard'); startListeningDB(); setInterval(updateClock, 1000); } else { window.showView('login'); } });
         window.startLogin = () => { signInWithEmailAndPassword(auth, document.getElementById('login_email').value, document.getElementById('login_pwd').value).catch(() => { document.getElementById('loginError').style.display='block'; document.getElementById('loginError').innerText="登入失敗"; }); }
         document.getElementById('btnLogin').onclick = window.startLogin; document.getElementById('btnLogout').onclick = () => signOut(auth).then(()=>location.reload());
 
-        function getLocalYMD() { const d = new Date(); return new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0]; }
+        function getLocalYMD() { const now = new Date(); const offset = now.getTimezoneOffset() * 60000; return new Date(now - offset).toISOString().split('T')[0]; }
         function isTodayBirthday(dStr) { if (!dStr) return false; const today = new Date(); const [y, m, d] = dStr.split('-'); return (parseInt(m) === today.getMonth() + 1) && (parseInt(d) === today.getDate()); }
         function safeDate(d) { if(!d) return new Date(0); const t = new Date(d); return isNaN(t.getTime()) ? new Date(0) : t; }
+        function updateClock() { const now = new Date(); const timeStr = now.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'}); if(document.getElementById('receiptTime')) document.getElementById('receiptTime').innerText = `${getLocalYMD().replace(/-/g,'/')} ${timeStr}`; }
+        function attachAutoSave() { const inputs = document.querySelectorAll('#profile input, #profile textarea, #profile select'); inputs.forEach(el => { el.oninput = window.debounceSaveProfile; el.onchange = window.debounceSaveProfile; }); }
 
         window.toggleSidebar = () => { document.getElementById('crmSidebar').classList.toggle('closed'); }
-        
-        window.runSystemRepair = async () => {
-            if(!confirm("確定執行資料庫健檢？")) return;
-            const snap = await getDocs(collection(db, "clients"));
-            let count = 0;
-            snap.forEach(async docSnap => {
-                let data = docSnap.data();
-                let updates = {};
-                let needsUpdate = false;
-                if (!data.id) { updates.id = Date.now() + Math.floor(Math.random() * 1000); needsUpdate = true; }
-                if (typeof data.balance !== 'number') { updates.balance = parseInt(data.balance) || 0; needsUpdate = true; }
-                if (!Array.isArray(data.transactions)) { updates.transactions = []; needsUpdate = true; }
-                if (!Array.isArray(data.sessions)) { updates.sessions = []; needsUpdate = true; }
-                if (!Array.isArray(data.activePackages)) { updates.activePackages = []; needsUpdate = true; }
-                if (needsUpdate) { await updateDoc(doc(db, "clients", docSnap.id), updates); count++; }
-            });
-            alert(`修復完成：${count} 筆資料`); location.reload();
-        };
+        window.runSystemRepair = async () => { if(!confirm("確定執行資料庫健檢？")) return; const snap = await getDocs(collection(db, "clients")); let count = 0; snap.forEach(async docSnap => { let data = docSnap.data(); let updates = {}; let needsUpdate = false; if (!data.id) { updates.id = Date.now() + Math.floor(Math.random() * 1000); needsUpdate = true; } if (typeof data.balance !== 'number') { updates.balance = parseInt(data.balance) || 0; needsUpdate = true; } if (!Array.isArray(data.transactions)) { updates.transactions = []; needsUpdate = true; } if (!Array.isArray(data.sessions)) { updates.sessions = []; needsUpdate = true; } if (!Array.isArray(data.activePackages)) { updates.activePackages = []; needsUpdate = true; } if (!Array.isArray(data.tags)) { updates.tags = []; needsUpdate = true; } if (needsUpdate) { await updateDoc(doc(db, "clients", docSnap.id), updates); count++; } }); alert(`修復完成：${count} 筆資料`); location.reload(); };
 
         let defaultMenu = { courses: [{ name: "上睫毛管理", price: 999 }, { name: "下睫毛管理", price: 500 }, { name: "野生眉雕塑", price: 999 }, { name: "純修眉", price: 100 }, { name: "卸妝", price: 100 }], products: [{ name: "睫毛雨衣", price: 600 }, { name: "睫毛滋養液", price: 930 }], discounts: [{ name: "9折優惠", type: "discount", val: 0.9 }, { name: "分享優惠", type: "fixed_discount", val: 50 }, { name: "回訪優惠", type: "fixed_discount", val: 100 }] };
         let menuData = JSON.parse(localStorage.getItem('posMenu')) || defaultMenu;
-        let cart = [], selectedPosClient = null, clients = [], currentClientId = null, unsubscribeDaily = null, unsubscribeMonthly = null, saveTimer = null, signaturePad, signatureCtx, isSigning = false, selectedCartIndex = -1;
+        let cart = [], selectedPosClient = null, clients = [], currentClientId = null, unsubscribeDaily = null, unsubscribeMonthly = null, saveTimer = null, signaturePad, signatureCtx, isSigning = false, selectedCartIndex = -1, packageOwnerClient = null;
 
         function startListeningDB() {
             onSnapshot(collection(db, "clients"), (snap) => {
@@ -345,16 +306,76 @@
                 clients.sort((a, b) => (b.id || 0) - (a.id || 0));
                 window.renderClientList(); renderClientDatalist(); renderPayerSelect();
                 if(selectedPosClient) { const fresh = clients.find(c => c.id === selectedPosClient.id); if(fresh) { selectedPosClient = fresh; document.getElementById('posBalance').innerText = `$${fresh.balance}`; } }
+                if(window.pendingNewClientId) { window.loadClient(window.pendingNewClientId); window.pendingNewClientId = null; setTimeout(() => document.getElementById('p_name').focus(), 300); }
                 updateCalculations();
             });
         }
+
+        window.checkPackageOwner = (val) => {
+            const match = clients.find(c => c.name === val);
+            const selector = document.getElementById('package_selector');
+            selector.innerHTML = '';
+            
+            if(match) {
+                packageOwnerClient = match; 
+                let pkgs = match.activePackages || [];
+                if(!Array.isArray(pkgs)) pkgs = Object.values(pkgs);
+                
+                let hasOption = false;
+                pkgs.forEach((p, idx) => {
+                    if(p.remainingSessions > 0) {
+                        const opt = document.createElement('option');
+                        opt.value = idx;
+                        opt.innerText = `${p.name} (剩${p.remainingSessions}堂)`;
+                        selector.appendChild(opt);
+                        hasOption = true;
+                    }
+                });
+                if(!hasOption) { const opt = document.createElement('option'); opt.innerText = "無可用堂數"; selector.appendChild(opt); }
+            } else {
+                packageOwnerClient = null;
+                const opt = document.createElement('option'); opt.innerText = "查無此人"; selector.appendChild(opt);
+            }
+            updateCalculations();
+        };
+
+        // V94: Auto Add Package Redemption to Cart
+        window.addPackageToCartFromSelector = () => {
+             const selector = document.getElementById('package_selector');
+             const pkgIdx = selector.value;
+             
+             // 1. Clean existing redemptions first
+             cart = cart.filter(i => !i.isPackageRedemption);
+
+             if(pkgIdx !== "" && packageOwnerClient) {
+                 let pkgs = packageOwnerClient.activePackages || [];
+                 if(!Array.isArray(pkgs)) pkgs = Object.values(pkgs);
+                 const pkg = pkgs[pkgIdx];
+
+                 if(pkg) {
+                     cart.push({
+                         name: "🎟️ 扣抵: " + pkg.name,
+                         price: 0,
+                         isPackageRedemption: true, 
+                         category: '課程',
+                         packageIndex: pkgIdx, 
+                         packageOwnerName: packageOwnerClient.name,
+                         packageContent: pkg.content
+                     });
+                 }
+             }
+             window.updateCalculations();
+        };
 
         function renderPayerSelect() { const dl = document.getElementById('shared_payer_list'); if(!dl) return; dl.innerHTML = ''; clients.forEach(c => { if(c.balance > 0 || (c.activePackages && c.activePackages.length > 0)) { const opt = document.createElement('option'); opt.value = c.name; opt.innerText = `餘額:$${c.balance}`; dl.appendChild(opt); } }); }
         function renderPOS() { renderSection('pos_courses', menuData.courses, '課程'); renderSection('pos_products', menuData.products, '產品'); renderSection('pos_discounts', menuData.discounts, '優惠'); }
         function renderSection(id, items, category) { const el = document.getElementById(id); el.innerHTML = ''; items.forEach(item => { const btn = document.createElement('div'); btn.className = 'item-btn'; if(item.type === 'discount') { btn.innerHTML = `<div style="font-weight:bold">${item.name}</div><small>全單折扣</small>`; btn.onclick = () => addToCart({ name: item.name, price: 0, type: 'discount', val: item.val }); } else if(item.type === 'fixed_discount') { btn.innerHTML = `<div style="font-weight:bold">${item.name}</div><small>-$${item.val}</small>`; btn.onclick = () => addToCart({ name: item.name, price: -item.val, type: 'fixed_discount', val: item.val }); } else { btn.innerHTML = `<div style="font-weight:bold">${item.name}</div><div>$${item.price}</div>`; btn.onclick = () => addToCart({ name: item.name, price: item.price, category: category }); } el.appendChild(btn); }); }
         function renderClientDatalist() { const dl = document.getElementById('client_list_suggestions'); dl.innerHTML = ''; clients.forEach(c => { const opt = document.createElement('option'); opt.value = c.name; dl.appendChild(opt); }); }
-        window.checkPosClient = (val) => { selectedPosClient = clients.find(c => c.name === val) || null; const balance = selectedPosClient ? (selectedPosClient.balance || 0) : 0; document.getElementById('posBalance').innerText = `$${balance}`; const payerInput = document.getElementById('shared_payer_input'); if(selectedPosClient) { payerInput.value = selectedPosClient.name; document.getElementById('is_member_rate').checked = false; } else { payerInput.value = ""; document.getElementById('is_member_rate').checked = false; } updateCalculations(); }
-        
+        window.checkPosClient = (val) => { selectedPosClient = clients.find(c => c.name === val) || null; const balance = selectedPosClient ? (selectedPosClient.balance || 0) : 0; document.getElementById('posBalance').innerText = `$${balance}`; const payerInput = document.getElementById('shared_payer_input'); if(selectedPosClient) { payerInput.value = selectedPosClient.name; document.getElementById('is_member_rate').checked = false; } else { payerInput.value = ""; document.getElementById('is_member_rate').checked = false; } 
+            document.getElementById('package_owner_input').value = selectedPosClient ? selectedPosClient.name : "";
+            if(selectedPosClient) window.checkPackageOwner(selectedPosClient.name);
+            updateCalculations(); 
+        }
         window.addExpense = (type) => { let amt = prompt(`請輸入[${type}]金額：`); if(!amt || isNaN(amt)) return; let note = prompt(`請輸入[${type}]備註：`, ""); let finalName = type + (note ? ` (${note})` : ""); addToCart({ name: finalName, price: -Math.abs(parseInt(amt)), category: '支出', type: 'expense' }); }
         window.addModelPrice = () => { let amt = prompt("模特價："); if(!amt || isNaN(amt)) return; let note = prompt("備註：", ""); addToCart({ name: "模特價"+(note?`-${note}`:""), price: parseInt(amt), category: '課程' }); }
         window.addPackage = (type) => { let pkg = (type===1) ? { name: "包堂-5堂(上睫毛+濃黑)", price: 5000, s: 5 } : { name: "包堂-10+1堂(上睫毛+濃黑)", price: 10000, s: 11 }; cart.push({ name: pkg.name, price: pkg.price, type: 'package_deal', category: '儲值/包堂', sessionsCount: pkg.s, packageContent: "上睫毛管理+濃黑養護" }); updateCalculations(); }
@@ -366,10 +387,166 @@
         window.removeCart = (idx) => { cart.splice(idx, 1); if(selectedCartIndex === idx) selectedCartIndex = -1; window.updateCalculations(); };
         window.applySingleItemDiscount = () => { if(selectedCartIndex === -1) return alert("請選商品"); const item = cart[selectedCartIndex]; let rate = prompt("折扣 (0.9=9折):"); if(rate) { item.price = Math.round(item.originalPrice * parseFloat(rate)); item.name = `${item.name} (${parseFloat(rate)*10}折)`; updateCalculations(); } }
 
-        function applyMemberLogic() { const isVIP = document.getElementById('is_member_rate').checked; cart.forEach(item => { if(item.category === '儲值/包堂' || item.price < 0) return; if(isVIP) { item.isMemberPrice = true; if(item.name.includes('野生眉')) item.price = VIP_PRICES.BROW; else if(item.name.includes('下睫毛')) item.price = VIP_PRICES.LASH_DOWN; else if(item.name.includes('上睫毛')) item.price = VIP_PRICES.LASH_UP; } else { item.price = item.originalPrice; delete item.isMemberPrice; } }); }
-        window.updateCalculations = () => { applyMemberLogic(); const list = document.getElementById('cartList'); list.innerHTML = ''; let total = 0; cart.forEach((i, idx) => { total += i.price; let activeClass = (idx === selectedCartIndex) ? 'active-item' : ''; list.innerHTML += `<div class="cart-item ${activeClass}" onclick="window.selectCartItem(${idx})"><div>${i.name}</div><span>$${i.price} <span class="cart-remove" onclick="window.removeCart(${idx})">×</span></span></div>`; }); document.getElementById('posTotal').innerText = `$${total}`; const payMode = document.getElementById('payment_mode').value; if(payMode === 'package') document.getElementById('package_select_area').style.display = 'block'; else document.getElementById('package_select_area').style.display = 'none'; }
+        function applyMemberLogic() { 
+            const isVIP = document.getElementById('is_member_rate').checked; 
+            const isPackageMode = document.getElementById('payment_mode').value === 'package';
+            const hasPackageRedemption = cart.some(i => i.isPackageRedemption);
+            
+            // V93: Auto VIP if using package
+            if(isPackageMode || hasPackageRedemption) {
+                document.getElementById('is_member_rate').checked = true;
+            }
 
-        window.submitCheckout = () => { if(cart.length===0) return; /* ... V63 logic ... */ const name = document.getElementById('pos_client_name').value || "Walk-in"; let total = parseInt(document.getElementById('posTotal').innerText.replace('$','')); const date = getLocalYMD(); const id = Date.now().toString(); addDoc(collection(db,"pos_records"), {date, timestamp:Date.now(), client:name, total, items: cart.map(i=>i.name).join('+'), refId: id}).then(()=>{ alert("結帳完成"); cart=[]; updateCalculations(); }); }
+            const activeVIP = document.getElementById('is_member_rate').checked;
+
+            cart.forEach(item => { 
+                if(item.category === '儲值/包堂' || item.price < 0 || item.isPackageRedemption) return; 
+                if(activeVIP) { 
+                    item.isMemberPrice = true; 
+                    if(item.name.includes('野生眉')) item.price = VIP_PRICES.BROW; 
+                    else if(item.name.includes('下睫毛')) item.price = VIP_PRICES.LASH_DOWN; 
+                    else if(item.name.includes('上睫毛')) item.price = VIP_PRICES.LASH_UP; 
+                } else { 
+                    item.price = item.originalPrice; delete item.isMemberPrice; 
+                } 
+            }); 
+        }
+
+        window.updateCalculations = () => { 
+            const payMode = document.getElementById('payment_mode').value; 
+            
+            // V94: Cleanup if leaving package mode
+            if(payMode !== 'package') {
+                cart = cart.filter(i => !i.isPackageRedemption);
+            } else {
+                 // Try to auto-add if selector has value
+                 const selector = document.getElementById('package_selector');
+                 if(selector.value && cart.every(i => !i.isPackageRedemption)) {
+                     window.addPackageToCartFromSelector();
+                 }
+            }
+
+            applyMemberLogic(); 
+            
+            const list = document.getElementById('cartList'); list.innerHTML = ''; let total = 0; 
+            cart.forEach((i, idx) => { 
+                total += i.price; 
+                let activeClass = (idx === selectedCartIndex) ? 'active-item' : ''; 
+                list.innerHTML += `<div class="cart-item ${activeClass}" onclick="window.selectCartItem(${idx})"><div>${i.name}</div><span>$${i.price} <span class="cart-remove" onclick="window.removeCart(${idx})">×</span></span></div>`; 
+            }); 
+            document.getElementById('posTotal').innerText = `$${total}`; 
+            
+            if(payMode === 'package') document.getElementById('package_select_area').style.display = 'block'; 
+            else document.getElementById('package_select_area').style.display = 'none'; 
+        }
+
+        window.submitCheckout = async () => { 
+            // V94: Allow $0 if package redemption exists
+            const hasRedemption = cart.some(i => i.isPackageRedemption);
+            if(cart.length===0) return alert("購物車空的"); 
+            
+            let name = document.getElementById('pos_client_name').value || "Walk-in"; 
+            let total = parseInt(document.getElementById('posTotal').innerText.replace('$','')); 
+            const date = getLocalYMD(); 
+            const id = Date.now().toString(); 
+            
+            if (!selectedPosClient && name !== "Walk-in") {
+                 const match = clients.find(c => c.name === name);
+                 if(match) selectedPosClient = match;
+            }
+
+            try {
+                await addDoc(collection(db,"pos_records"), {
+                    date, 
+                    timestamp:Date.now(), 
+                    client:name, 
+                    total, 
+                    items: cart.map(i=>i.name).join('+'), 
+                    refId: id
+                });
+                
+                if(selectedPosClient) {
+                    const freshA = (await getDoc(doc(db, "clients", selectedPosClient.firebaseId))).data();
+                    let newBalA = parseInt(freshA.balance) || 0;
+                    const payMode = document.getElementById('payment_mode').value;
+                    
+                    const newTrans = { 
+                        date, 
+                        item: cart.map(i=>i.name).join('+'), 
+                        amt: total, 
+                        method: payMode === 'package' ? "包堂扣抵" : "一般結帳", 
+                        refId: id 
+                    };
+                    
+                    if(payMode === 'balance') newBalA -= total;
+
+                    let newPkgs = [];
+                    cart.forEach(item => {
+                        if (item.type === 'package_deal') {
+                            newPkgs.push({
+                                id: 'pkg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                                name: item.name,
+                                content: item.packageContent || "一般包堂",
+                                totalSessions: item.sessionsCount,
+                                remainingSessions: item.sessionsCount,
+                                purchaseDate: date
+                            });
+                        }
+                    });
+
+                    let sessionItems = [];
+                    cart.forEach(item => { 
+                        if(item.category === '課程' && !item.isPackageRedemption) sessionItems.push(item.name); 
+                        if(item.isPackageRedemption) sessionItems.push(item.name.replace("🎟️ 扣抵: ", "")); // V94 Clean name
+                    });
+                    
+                    let updates = { balance: newBalA, transactions: arrayUnion(newTrans) };
+                    if (newPkgs.length > 0) updates.activePackages = arrayUnion(...newPkgs);
+                    if (sessionItems.length > 0) {
+                        const newSession = { date: date, items: sessionItems, prePhotos: [], padPhotos: [], postPhotos: [], padNote: payMode === 'package' ? "使用包堂" : "" };
+                        updates.sessions = arrayUnion(newSession);
+                    }
+
+                    await updateDoc(doc(db, "clients", selectedPosClient.firebaseId), updates);
+                    
+                    // Client B (Owner) Update
+                    if(payMode === 'package' && packageOwnerClient) {
+                         const pkgIdx = document.getElementById('package_selector').value;
+                         if(pkgIdx !== "") {
+                             const freshB = (await getDoc(doc(db, "clients", packageOwnerClient.firebaseId))).data();
+                             let pkgsB = freshB.activePackages;
+                             // V94: Use Object.values for safety
+                             if(!Array.isArray(pkgsB)) pkgsB = Object.values(pkgsB);
+                             
+                             if(pkgsB && pkgsB[pkgIdx] && pkgsB[pkgIdx].remainingSessions > 0) {
+                                 pkgsB[pkgIdx].remainingSessions -= 1;
+                                 
+                                 if(packageOwnerClient.id !== selectedPosClient.id) {
+                                     const transB = {
+                                         date,
+                                         item: `親友[${name}]使用包堂`,
+                                         amt: 0,
+                                         method: "親友共享",
+                                         refId: id 
+                                     };
+                                     await updateDoc(doc(db, "clients", packageOwnerClient.firebaseId), {
+                                         activePackages: pkgsB,
+                                         transactions: arrayUnion(transB)
+                                     });
+                                 } else {
+                                     await updateDoc(doc(db, "clients", packageOwnerClient.firebaseId), { activePackages: pkgsB });
+                                 }
+                             }
+                         }
+                    }
+                }
+                alert("結帳完成！"); 
+                cart=[]; 
+                updateCalculations(); 
+            } catch(e) {
+                alert("結帳失敗: " + e.message);
+            }
+        }
 
         window.loadClient = (id) => {
             try {
@@ -384,58 +561,400 @@
                 document.getElementById('p_birthday').value = c.birthday || '';
                 document.getElementById('p_region').value = c.region || '';
                 document.getElementById('clientNotes').value = c.notes || '';
-                if(c.profileData) { Object.keys(c.profileData).forEach(k => { const el = document.querySelector(`input[data-key="${k}"]`); if(el) el.checked = c.profileData[k]; }); }
                 
+                if(c.profileData) { Object.keys(c.profileData).forEach(k => { const el = document.querySelector(`input[data-key="${k}"]`); if(el) el.checked = c.profileData[k]; }); }
+                if(c.friend_name) document.getElementById('p_friend_name').value = c.friend_name;
+                if(c.neighbor_unit) document.getElementById('p_neighbor_unit').value = c.neighbor_unit;
+                if(c.eye_disease) document.getElementById('p_disease').value = c.eye_disease;
+                if(c.allergy_other) document.getElementById('p_allergy_other').value = c.allergy_other;
+                if(c.experience) document.getElementById('p_exp').value = c.experience;
+                if(c.habit) document.getElementById('p_habit').value = c.habit;
+                attachAutoSave();
+
+                const previewImg = document.getElementById('signature-preview-img');
+                const placeholder = document.getElementById('signature-placeholder');
+                if(c.signature) { previewImg.src = c.signature; previewImg.style.display = 'block'; placeholder.style.display = 'none'; } else { previewImg.src = ''; previewImg.style.display = 'none'; placeholder.style.display = 'block'; }
+
                 const pkgArea = document.getElementById('packageDisplayArea'); pkgArea.innerHTML = '';
-                if(Array.isArray(c.activePackages)) {
-                    c.activePackages.forEach(p => {
-                        if(p.remainingSessions > 0) pkgArea.innerHTML += `<div style="background:#E6E6FA;padding:5px;"><b>${p.name}</b> 剩: ${p.remainingSessions}堂</div>`;
+                let pkgs = c.activePackages;
+                if(pkgs && !Array.isArray(pkgs)) pkgs = Object.values(pkgs);
+                
+                if(Array.isArray(pkgs) && pkgs.length > 0) {
+                    let walletHtml = '<div class="package-wallet">';
+                    let hasActive = false;
+                    pkgs.forEach((p, idx) => {
+                        if(p.remainingSessions > 0) {
+                            hasActive = true;
+                            walletHtml += `
+                            <div class="ticket-card">
+                                <div class="ticket-left">
+                                    <div class="ticket-count">${p.remainingSessions}</div>
+                                    <div class="ticket-label">剩餘堂數</div>
+                                </div>
+                                <div class="ticket-right">
+                                    <div class="ticket-name">${p.name}</div>
+                                    <div style="font-size:0.8rem; color:#888;">內容：${p.content || '未指定'}</div>
+                                    <div class="ticket-actions">
+                                        <button class="btn-use" onclick="window.quickUseSession(${idx})">⚡ 使用1堂</button>
+                                        <button class="btn-share" onclick="window.quickShareSession(${idx})">🎁 轉贈</button>
+                                    </div>
+                                </div>
+                            </div>`;
+                        }
+                    });
+                    walletHtml += '</div>';
+                    if(hasActive) pkgArea.innerHTML = `<h3>🎟️ 課程票券夾</h3>` + walletHtml;
+                    else pkgArea.innerHTML = `<div style="text-align:center; color:#ccc; padding:10px; border:2px dashed #eee; border-radius:10px;">目前沒有可用的包堂票券</div>`;
+                } else {
+                    pkgArea.innerHTML = `<div style="text-align:center; color:#ccc; padding:10px; border:2px dashed #eee; border-radius:10px;">目前沒有可用的包堂票券</div>`;
+                }
+
+                let sessions = [];
+                if (Array.isArray(c.sessions)) sessions = c.sessions;
+                else if (c.sessions && typeof c.sessions === 'object') sessions = Object.values(c.sessions);
+
+                const sL = document.getElementById('sessionList'); sL.innerHTML = '';
+                if(sessions.length === 0) sL.innerHTML = '<div style="text-align:center;color:#ccc;padding:20px;">暫無課程紀錄</div>';
+                else {
+                    sessions.forEach((s, idx) => {
+                         sL.innerHTML += `<div style="background:#FFF0F5;border:1px solid #EAC8D0;margin-bottom:10px;padding:10px;border-radius:10px;"><div style="display:flex;justify-content:space-between;"><div><b>${s.date}</b><br>${s.items.join(', ')}</div><button style="background:var(--danger-color);color:white;border:none;padding:2px 8px;border-radius:5px;cursor:pointer;" onclick="window.deleteSession(${idx})">🗑️</button></div><div class="photos-container">${renderPG(idx, 'prePhotos', s.prePhotos||[], '前')}<div class="photo-column"><div style="text-align:center;font-size:0.8rem;color:#C79AA5;">墊片型號/備註</div><textarea class="pad-input" onchange="window.updateSessionPad(this, ${idx})">${s.padNote||''}</textarea></div>${renderPG(idx, 'postPhotos', s.postPhotos||[], '後')}</div></div>`;
                     });
                 }
 
-                const sL = document.getElementById('sessionList'); sL.innerHTML = '';
-                let sessions = Array.isArray(c.sessions) ? [...c.sessions] : [];
-                sessions.sort((a,b) => safeDate(b.date) - safeDate(a.date));
-                if(sessions.length === 0) sL.innerHTML = '<div style="text-align:center;color:#ccc;padding:20px;">暫無課程紀錄</div>';
-                sessions.forEach((s) => {
-                    let idx = c.sessions.indexOf(s);
-                    sL.innerHTML += `<div style="background:#FFF0F5;border:1px solid #EAC8D0;margin-bottom:10px;padding:10px;border-radius:10px;"><b>${s.date}</b><br>${s.items.join(', ')}<br><small>${s.padNote||''}</small></div>`;
-                });
+                let trans = [];
+                if (Array.isArray(c.transactions)) trans = c.transactions;
+                else if (c.transactions && typeof c.transactions === 'object') trans = Object.values(c.transactions);
 
                 const bL = document.getElementById('billingList'); bL.innerHTML = '';
-                let trans = Array.isArray(c.transactions) ? [...c.transactions] : [];
-                trans.sort((a,b) => safeDate(b.date) - safeDate(a.date));
                 if(trans.length === 0) bL.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#ccc;">暫無消費紀錄</td></tr>';
-                trans.forEach((t) => {
-                    let idx = c.transactions.indexOf(t);
-                    bL.innerHTML += `<tr><td>${t.date}</td><td>${t.item}</td><td>$${t.amt}</td><td><button class="delete-btn" onclick="window.deleteTransaction(${idx})">🗑️</button></td></tr>`;
-                });
+                else {
+                    // Safe Index Map
+                    let transMap = trans.map((t, idx) => ({...t, _realIdx: idx}));
+                    transMap.sort((a,b) => safeDate(b.date) - safeDate(a.date));
 
+                    transMap.forEach((t) => {
+                        let idx = t._realIdx;
+                        bL.innerHTML += `<tr><td>${t.date}</td><td>${t.item}</td><td>$${t.amt}</td><td><button class="delete-btn" onclick="window.deleteTransaction(${idx})">🗑️</button></td></tr>`;
+                    });
+                }
+
+                renderTags();
                 window.switchTab('profile', {target: document.querySelector('.tab-btn')});
 
             } catch (e) {
-                alert("讀取失敗: " + e.message);
                 console.error(e);
+                alert("讀取失敗，請截圖控制台: " + e);
             }
         };
 
         window.switchTab = (id, e) => { document.querySelectorAll('.tab-content').forEach(d=>d.style.display='none'); document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); document.getElementById(id).style.display='flex'; if(e && e.target) e.target.classList.add('active'); };
-        window.renderClientList = () => { const l = document.getElementById('clientList'); l.innerHTML = ''; clients.forEach(c => { const li = document.createElement('li'); li.className = `client-item ${c.id === currentClientId ? 'active' : ''}`; li.innerHTML = `<span>${c.name} ${(c.balance > 0) ? '👑' : ''}</span><small>$${c.balance||0}</small>`; li.onclick = () => window.loadClient(c.id); l.appendChild(li); }); document.getElementById('clientTotalCount').innerText = `👥 列表：${clients.length} 人`; };
+        window.renderClientList = () => { const l = document.getElementById('clientList'); l.innerHTML = ''; clients.forEach(c => { const li = document.createElement('li'); li.className = `client-item ${c.id === currentClientId ? 'active' : ''}`; li.innerHTML = `<span>${c.name} ${(c.balance > 0) ? '👑' : ''}</span><small>$${c.balance||0}</small>`; li.onclick = () => window.selectClient(c.id); l.appendChild(li); }); document.getElementById('clientTotalCount').innerText = `👥 列表：${clients.length} 人`; };
         window.deleteTransaction = (idx) => { if(confirm("確定刪除？")) { alert("請重新整理以更新餘額"); } }
         window.confirmDailyClose = () => { /* ... */ };
-        window.renderDailyReport = () => { /* ... */ }; 
-        window.renderMonthlyReport = () => { /* ... */ };
         
-        window.onload = () => { document.getElementById('sess_date').value = new Date().toISOString().slice(0,16); }
+        window.renderDailyReport = (specificDate) => { 
+            const dateToQuery = specificDate || getLocalYMD(); 
+            const displayDate = new Date(dateToQuery); 
+            document.getElementById('dailyDate').innerText = `${displayDate.getFullYear()-1911}/${String(displayDate.getMonth()+1).padStart(2,'0')}/${String(displayDate.getDate()).padStart(2,'0')}`;
+            if(unsubscribeDaily) unsubscribeDaily();
+            unsubscribeDaily = onSnapshot(collection(db, "pos_records"), (snapshot) => {
+                const tbody = document.getElementById('dailyList'); tbody.innerHTML = '';
+                let total = 0;
+                let records = [];
+                snapshot.forEach(doc => { const d = doc.data(); if(d.date === dateToQuery) records.push({id: doc.id, ...d}); });
+                records.sort((a,b) => safeDate(b.timestamp) - safeDate(a.timestamp));
+                records.forEach(d => {
+                    total += d.total;
+                    const time = safeDate(d.timestamp).toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit'});
+                    const displayItem = d.category || d.items; 
+                    const delBtn = `<button class="delete-btn" onclick="window.deleteDailyRecord('${d.id}')">🗑️</button>`;
+                    tbody.innerHTML += `<tr><td>${time}</td><td>${d.client}</td><td>${displayItem}</td><td>$${d.total}</td><td>${d.method||'-'}</td><td>${delBtn}</td></tr>`;
+                });
+                document.getElementById('dailyTotal').innerText = `$${total}`;
+            });
+        }; 
+
+        window.renderMonthlyReport = () => { 
+            const picker = document.getElementById('monthlyPicker').value; if(!picker) return;
+            if(unsubscribeMonthly) unsubscribeMonthly();
+            unsubscribeMonthly = onSnapshot(collection(db, "pos_records"), (snap) => {
+                const tbody = document.getElementById('monthlyList'); tbody.innerHTML = '';
+                const dailyData = {};
+                let monthTotal = 0;
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    if(d.date && d.date.startsWith(picker)) {
+                        if(!dailyData[d.date]) dailyData[d.date] = { total: 0, count: 0 };
+                        dailyData[d.date].total += d.total;
+                        dailyData[d.date].count += 1;
+                        monthTotal += d.total;
+                    }
+                });
+                Object.keys(dailyData).sort().forEach(date => {
+                    tbody.innerHTML += `<tr onclick="window.goToDaily('${date}')" style="cursor:pointer" title="點擊查看當日明細"><td>${date}</td><td>${dailyData[date].count}單</td><td>$${dailyData[date].total}</td><td>-</td></tr>`;
+                });
+                document.getElementById('monthlyTotal').innerText = `$${monthTotal}`;
+            });
+        };
+        
+        window.deleteDailyRecord = async (id) => {
+            if(!confirm("確定刪除？這將嘗試同步還原客戶的 餘額/堂數/紀錄。")) return;
+            try {
+                const recordSnap = await getDoc(doc(db, "pos_records", id));
+                if (!recordSnap.exists()) return alert("找不到紀錄");
+                const r = recordSnap.data();
+
+                await deleteDoc(doc(db, "pos_records", id));
+
+                if (r.client && r.client !== "Walk-in") {
+                    const q = query(collection(db, "clients"), where("name", "==", r.client));
+                    const cSnap = await getDocs(q);
+                    if (!cSnap.empty) {
+                        const cDoc = cSnap.docs[0];
+                        const c = cDoc.data();
+                        let updates = {};
+
+                        if (r.items.includes("儲值金")) {
+                            updates.balance = (c.balance || 0) - r.total;
+                        } else if (r.method && (r.method.includes("餘額") || r.method.includes("儲值"))) {
+                            updates.balance = (c.balance || 0) + r.total;
+                        }
+
+                        // V92: Revert Package Purchase
+                        if (r.items.includes("包堂-") && r.total > 0) {
+                             // Assuming purchasing a package adds it to activePackages
+                             // We try to remove the package that was added around that date with that name
+                             // Since we don't have exact ID link for creation, we remove the *latest* matching package
+                             let pkgs = c.activePackages || [];
+                             // Logic: Find latest package with name in item string
+                             // This is a heuristic. For strict correctness, we'd need to store created pkgId in POS record.
+                             // V92 Fix: Check if item name matches package name
+                             let pkgName = "";
+                             if(r.items.includes("5堂")) pkgName = "包堂-5堂(上睫毛+濃黑)";
+                             if(r.items.includes("10+1堂")) pkgName = "包堂-10+1堂(上睫毛+濃黑)";
+                             
+                             if(pkgName) {
+                                 let pIdx = pkgs.findIndex(p => p.name === pkgName); // Remove the first one found (ideally latest)
+                                 if(pIdx > -1) {
+                                     pkgs.splice(pIdx, 1);
+                                     updates.activePackages = pkgs;
+                                 }
+                             }
+                        }
+
+                        // V92: Revert Usage (Support "🎟️ 扣抵" format)
+                        if (r.items.includes("使用包堂-") || r.items.includes("🎟️ 扣抵")) {
+                            let pName = r.items.split("-")[1] || r.items.replace("🎟️ 扣抵: ", ""); 
+                            let pkgs = c.activePackages || [];
+                            let pIdx = pkgs.findIndex(p => p.name.includes(pName.trim()));
+                            if (pIdx > -1) {
+                                pkgs[pIdx].remainingSessions++;
+                                updates.activePackages = pkgs;
+                            }
+                        }
+
+                        if (c.transactions && r.refId) {
+                            updates.transactions = c.transactions.filter(t => t.refId !== r.refId);
+                        }
+                        
+                        // V92: Remove Session Record if it exists
+                        // Note: Session doesn't have refId directly usually, but we can match date + item
+                        if (c.sessions) {
+                             // Heuristic: Remove session on same date with similar item
+                             // Or strict if we added refId to session (we didn't in V91)
+                        }
+
+                        if (Object.keys(updates).length > 0) {
+                            await updateDoc(doc(db, "clients", cDoc.id), updates);
+                        }
+                    }
+                }
+                
+                if (r.refId) {
+                    clients.forEach(async (cl) => {
+                         let hasTrans = cl.transactions && cl.transactions.some(t => t.refId === r.refId);
+                         if(hasTrans) {
+                             let updates = {};
+                             updates.transactions = cl.transactions.filter(t => t.refId !== r.refId);
+                             await updateDoc(doc(db, "clients", cl.firebaseId), updates);
+                         }
+                    });
+                }
+                
+                alert("刪除成功！客戶資料已同步更新。");
+            } catch (e) {
+                console.error(e);
+                alert("刪除時發生錯誤: " + e.message);
+            }
+        };
+        
+        window.onload = () => { 
+            const now = new Date();
+            const offset = now.getTimezoneOffset() * 60000;
+            const localISOTime = new Date(now - offset).toISOString().slice(0, 16);
+            document.getElementById('sess_date').value = localISOTime;
+        }
 
         function compressImage(file) { return new Promise((resolve) => { const img = new Image(); img.src = URL.createObjectURL(file); img.onload = () => { const canvas = document.createElement('canvas'); const MAX_WIDTH = 800; const scaleSize = MAX_WIDTH / img.width; canvas.width = MAX_WIDTH; canvas.height = img.height * scaleSize; const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, canvas.width, canvas.height); resolve(canvas.toDataURL('image/jpeg', 0.6)); } }); }
-        function renderPG(i,k,p,l){let h=`<div class="photo-column"><div style="text-align:center;font-size:0.8rem;color:#C79AA5;">${l}</div><div class="photo-grid">`;p.forEach(u=>h+=`<div class="photo-box has-img" style="background-image:url(${u})"></div>`);if(p.length<3)h+=`<label class="photo-box">+<input type="file" style="display:none" accept="image/*" onchange="window.uploadPhoto(${i},'${k}',this)"></label>`;return h+'</div></div>';}
-        window.uploadPhoto = async (i, k, inp) => { if(inp.files[0]) { const compressedDataUrl = await compressImage(inp.files[0]); const c = clients.find(x => x.id === currentClientId); let ns = [...c.sessions]; if(!ns[i][k]) ns[i][k] = []; ns[i][k].push(compressedDataUrl); updateDoc(doc(db, "clients", c.firebaseId), { sessions: ns }); } };
-        function renderTags(){ const c=clients.find(x=>x.id===currentClientId); document.querySelectorAll('.tag-chip').forEach(e=>{const t=e.getAttribute('data-tag');if(c.tags&&c.tags.includes(t))e.classList.add('active');else e.classList.remove('active');}); const container = document.getElementById('tagList'); document.querySelectorAll('.custom-chip').forEach(e => e.remove()); if(c.tags) { c.tags.forEach(t => { if(!document.querySelector(`.tag-chip[data-tag="${t}"]`)) { const s=document.createElement('span'); s.className='tag-chip active custom-chip'; s.innerText=t; s.onclick=()=>window.toggleTag(t); container.appendChild(s); }})} }
-        window.saveProfile = () => { /* ... simplified save ... */ };
+        
+        window.renderPG = (i,k,p,l) => {
+            let h=`<div class="photo-column"><div style="text-align:center;font-size:0.8rem;color:#C79AA5;">${l}</div><div class="photo-grid">`;
+            p.forEach(u=>h+=`<div class="photo-box has-img" style="background-image:url(${u})"></div>`);
+            if(p.length<3)h+=`<label class="photo-box">+<input type="file" style="display:none" accept="image/*" onchange="window.uploadPhoto(${i},'${k}',this)"></label>`;
+            return h+'</div></div>';
+        };
+        
+        window.uploadPhoto = async (i, k, inp) => { if(inp.files[0]) { const compressedDataUrl = await compressImage(inp.files[0]); const c = clients.find(x => x.id === currentClientId); let ns = [...c.sessions]; if(!ns[i][k]) ns[i][k] = []; ns[i][k].push(compressedDataUrl); updateDoc(doc(db, "clients", c.firebaseId), { sessions: ns }).then(()=>window.loadClient(currentClientId)); } };
+        
+        function renderTags(){ 
+            const c=clients.find(x=>x.id===currentClientId); 
+            const container = document.getElementById('tagList'); container.innerHTML = '';
+            const defaultTags = ['黑名單', 'VIP', '容易遲到', '喜歡安靜', '好聊天', '追求完美'];
+            defaultTags.forEach(t => { const s = document.createElement('span'); s.className = 'tag-chip'; if(c.tags && c.tags.includes(t)) s.classList.add('active'); s.innerText = t; s.onclick = () => window.toggleTag(t); container.appendChild(s); });
+            if(c.tags) { c.tags.forEach(t => { if(!defaultTags.includes(t)) { const s=document.createElement('span'); s.className='tag-chip active custom-chip'; s.innerText=t; s.onclick=()=>window.toggleTag(t); container.appendChild(s); }}); }
+        }
+        
+        window.toggleTag=(t)=>{const c=clients.find(x=>x.id===currentClientId);let ts=c.tags?[...c.tags]:[];const i=ts.indexOf(t);if(i>-1)ts.splice(i,1);else ts.push(t);updateDoc(doc(db,"clients",c.firebaseId),{tags:ts}).then(()=>renderTags());};
+        window.addNewCustomTag=()=>{ const val=document.getElementById('new_tag_input').value; if(val){ window.toggleTag(val); document.getElementById('new_tag_input').value=''; } }
+
+        window.saveProfile = () => {
+            if(!currentClientId) return;
+            const c=clients.find(x=>x.id===currentClientId);
+            const profileData = {};
+            document.querySelectorAll('input[type="checkbox"][data-key]').forEach(el => { profileData[el.dataset.key] = el.checked; });
+            updateDoc(doc(db,"clients",c.firebaseId),{
+                name:document.getElementById('p_name').value,
+                phone:document.getElementById('p_phone').value,
+                birthday:document.getElementById('p_birthday').value,
+                region: document.getElementById('p_region').value, 
+                notes:document.getElementById('clientNotes').value,
+                friend_name: document.getElementById('p_friend_name').value,
+                neighbor_unit: document.getElementById('p_neighbor_unit').value,
+                eye_disease: document.getElementById('p_disease').value,
+                allergy_other: document.getElementById('p_allergy_other').value,
+                experience: document.getElementById('p_exp').value,
+                habit: document.getElementById('p_habit').value,
+                profileData: profileData
+            });
+        };
         window.debounceSaveProfile = () => { if(saveTimer) clearTimeout(saveTimer); saveTimer=setTimeout(window.saveProfile,1500); };
-        window.saveSession = () => { /* ... simplified ... */ };
-        window.addNewCustomTag = () => { /* ... */ };
+        
+        window.openSignatureModal = () => {
+            if(!currentClientId) return alert("請先選擇客戶！");
+            const modal = document.getElementById('signatureModal');
+            modal.style.display = 'flex';
+            setTimeout(() => {
+                signaturePad = document.getElementById('large-signature-pad');
+                signatureCtx = signaturePad.getContext('2d');
+                signaturePad.width = signaturePad.offsetWidth;
+                signaturePad.height = signaturePad.offsetHeight;
+                signatureCtx.strokeStyle = "#000";
+                signatureCtx.lineWidth = 3;
+                signatureCtx.lineCap = "round";
+                const startSign = (e) => { isSigning = true; signatureCtx.beginPath(); const rect = signaturePad.getBoundingClientRect(); const x = (e.clientX || e.touches[0].clientX) - rect.left; const y = (e.clientY || e.touches[0].clientY) - rect.top; signatureCtx.moveTo(x, y); };
+                const moveSign = (e) => { if(!isSigning) return; e.preventDefault(); const rect = signaturePad.getBoundingClientRect(); const x = (e.clientX || e.touches[0].clientX) - rect.left; const y = (e.clientY || e.touches[0].clientY) - rect.top; signatureCtx.lineTo(x, y); signatureCtx.stroke(); };
+                const endSign = () => { isSigning = false; };
+                signaturePad.onmousedown = startSign; signaturePad.onmousemove = moveSign; signaturePad.onmouseup = endSign;
+                signaturePad.ontouchstart = startSign; signaturePad.ontouchmove = moveSign; signaturePad.ontouchend = endSign;
+            }, 100);
+        }
+        window.clearLargeSignature = () => { signatureCtx.clearRect(0, 0, signaturePad.width, signaturePad.height); }
+        window.confirmSignature = () => {
+            const dataUrl = signaturePad.toDataURL();
+            const c = clients.find(x => x.id === currentClientId);
+            updateDoc(doc(db, "clients", c.firebaseId), { signature: dataUrl }).then(() => {
+                window.loadClient(currentClientId);
+                window.closeModal('signatureModal');
+            });
+        }
+        window.closeModal = (id) => document.getElementById(id).style.display='none';
+        
+        window.createNewClient = () => {
+            const newId = Date.now();
+            addDoc(collection(db, "clients"), {
+                id: newId,
+                name: "新客", 
+                balance: 0,
+                birthday: "",
+                sessions: [],
+                transactions: [],
+                activePackages: [],
+                tags: [],
+                notes: "",
+                profileData: {},
+                signature: ""
+            }).then(() => {
+                window.pendingNewClientId = newId; 
+            });
+        };
+        
+        window.saveSession=()=>{const c=clients.find(x=>x.id===currentClientId);const d=document.getElementById('sess_date').value.replace('T',' ');let i=[];if(document.getElementById('sess_upper').checked)i.push("上睫毛");if(document.getElementById('sess_lower').checked)i.push("下睫毛");if(document.getElementById('sess_brow').checked)i.push("野生眉");const ns={date:d,items:i,prePhotos:[],padPhotos:[],postPhotos:[]};updateDoc(doc(db,"clients",c.firebaseId),{sessions:[ns,...(c.sessions||[])]}).then(()=>window.closeModal('sessionModal'));};
+        window.deleteSession = (idx) => { if(confirm("確定要刪除？")) { const c = clients.find(x => x.id === currentClientId); let newSessions = [...c.sessions]; newSessions.splice(idx, 1); updateDoc(doc(db, "clients", c.firebaseId), { sessions: newSessions }).then(()=>window.loadClient(currentClientId)); } }
+        window.updateSessionPad = (el, idx) => { const c = clients.find(x => x.id === currentClientId); let newSessions = [...c.sessions]; newSessions[idx].padNote = el.value; updateDoc(doc(db, "clients", c.firebaseId), { sessions: newSessions }); };
+
+        window.quickUseSession = (pkgIndex) => {
+            if(!currentClientId) return;
+            if(!confirm("確定要扣除 1 堂課程嗎？\n(這將會新增一筆 $0 的消費紀錄)")) return;
+            const c = clients.find(x => x.id === currentClientId);
+            let pkgs = [...c.activePackages]; 
+            if(pkgs && !Array.isArray(pkgs)) pkgs = Object.values(pkgs);
+            let targetPkg = pkgs[pkgIndex];
+            if(targetPkg.remainingSessions <= 0) return alert("堂數不足！");
+            targetPkg.remainingSessions -= 1;
+            const now = new Date();
+            const offset = now.getTimezoneOffset() * 60000;
+            const localDate = new Date(now - offset).toISOString().split('T')[0];
+            const refId = Date.now().toString();
+            const newTrans = { date: localDate, item: `使用包堂-${targetPkg.name}`, amt: 0, method: "包堂扣抵", payerName: c.name, refId: refId };
+            const newSession = { date: localDate, items: [targetPkg.content || "包堂課程"], prePhotos: [], padPhotos: [], postPhotos: [], padNote: "包堂自動建立" };
+            
+            addDoc(collection(db, "pos_records"), {
+                date: localDate,
+                timestamp: Date.now(),
+                client: c.name,
+                total: 0,
+                items: `使用包堂-${targetPkg.name}`,
+                refId: refId
+            });
+
+            updateDoc(doc(db, "clients", c.firebaseId), { activePackages: pkgs, transactions: arrayUnion(newTrans), sessions: arrayUnion(newSession) }).then(() => { alert("✅ 已扣除 1 堂，並自動建立課程紀錄！"); window.loadClient(currentClientId); });
+        };
+
+        window.quickShareSession = (pkgIndex) => {
+            if(!currentClientId) return;
+            const targetName = prompt("請輸入要轉贈/共用的對象姓名：");
+            if(!targetName) return;
+            const targetClient = clients.find(c => c.name === targetName);
+            if(!targetClient) return alert("找不到此客戶，請確認姓名是否完全正確！");
+            if(!confirm(`確定要從包堂中轉讓 1 堂給 [${targetName}] 嗎？`)) return;
+            const sourceClient = clients.find(x => x.id === currentClientId);
+            let pkgs = [...sourceClient.activePackages];
+             if(pkgs && !Array.isArray(pkgs)) pkgs = Object.values(pkgs);
+            if(pkgs[pkgIndex].remainingSessions <= 0) return alert("堂數不足！");
+            pkgs[pkgIndex].remainingSessions -= 1;
+            const now = new Date();
+            const offset = now.getTimezoneOffset() * 60000;
+            const localDate = new Date(now - offset).toISOString().split('T')[0];
+            const refId = Date.now().toString();
+            
+            const sourceTrans = { date: localDate, item: `轉讓包堂給-${targetName}`, amt: 0, method: "包堂轉出", refId: refId };
+            const targetTrans = { date: localDate, item: `使用[${sourceClient.name}]的包堂`, amt: 0, method: "親友共享", payerName: sourceClient.name, refId: refId };
+            const targetSession = { date: localDate, items: [`共享-${pkgs[pkgIndex].content}`], prePhotos: [], padPhotos: [], postPhotos: [], padNote: `來自 ${sourceClient.name} 的分享` };
+            
+             addDoc(collection(db, "pos_records"), {
+                date: localDate,
+                timestamp: Date.now(),
+                client: sourceClient.name,
+                total: 0,
+                items: `轉讓包堂給-${targetName}`,
+                refId: refId
+            });
+
+            Promise.all([
+                updateDoc(doc(db, "clients", sourceClient.firebaseId), { activePackages: pkgs, transactions: arrayUnion(sourceTrans) }),
+                updateDoc(doc(db, "clients", targetClient.firebaseId), { transactions: arrayUnion(targetTrans), sessions: arrayUnion(targetSession) })
+            ]).then(() => { alert(`🎉 成功！已將 1 堂課轉給 ${targetName} 使用。`); window.loadClient(currentClientId); });
+        };
 
     </script>
 </body>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bianca_eye.studio 管理系統 (V106 智能結帳版)</title>
+    <title>Bianca_eye.studio 管理系統 (V107 儲值金同步版)</title>
     <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@300;400;700&display=swap" rel="stylesheet">
     
     <script>
@@ -138,7 +138,7 @@
     <div id="login-overlay">
         <div class="login-box">
             <h2>Bianca<br>Eye Studio</h2>
-            <div style="font-size: 0.9rem; margin-bottom: 15px; color: var(--dark-pink);">✨ V106 智能結帳版</div>
+            <div style="font-size: 0.9rem; margin-bottom: 15px; color: var(--dark-pink);">✨ V107 儲值金同步版</div>
             <input type="email" id="login_email" class="login-input" placeholder="Firebase Email">
             <input type="password" id="login_pwd" class="login-input" placeholder="密碼">
             <button id="btnLogin" class="login-btn">登入系統</button>
@@ -235,7 +235,18 @@
                 </div>
 
                 <div id="sessions" class="tab-content"><div id="packageDisplayArea"></div><div id="sessionList" style="overflow-y:auto;flex-grow:1;"></div></div>
-                <div id="billing" class="tab-content"><div style="text-align:right;margin-bottom:10px;"><button class="add-btn" onclick="window.jumpToPosWithClient()">+ 新增消費 (前往結帳)</button></div><div style="overflow-y:auto;flex-grow:1;"><table><thead><tr><th>日期</th><th>項目</th><th>金額</th><th>操作</th></tr></thead><tbody id="billingList"></tbody></table></div></div>
+                <div id="billing" class="tab-content">
+                    <div style="text-align:right;margin-bottom:10px; display:flex; gap:10px; justify-content: flex-end;">
+                        <button class="add-btn" style="background:#20B2AA;" onclick="window.manualBalanceDeduct()">+ 補扣儲值金</button>
+                        <button class="add-btn" onclick="window.jumpToPosWithClient()">+ 新增消費 (前往結帳)</button>
+                    </div>
+                    <div style="overflow-y:auto;flex-grow:1;">
+                        <table>
+                            <thead><tr><th>日期</th><th>項目</th><th>金額</th><th>操作</th></tr></thead>
+                            <tbody id="billingList"></tbody>
+                        </table>
+                    </div>
+                </div>
                 <div id="notes" class="tab-content"><h3>📌 標籤</h3><div class="tags-container" id="tagList"></div><div class="add-tag-wrapper"><input type="text" id="new_tag_input" placeholder="新標籤"><button class="add-btn" onclick="window.addNewCustomTag()">+ 自訂</button></div><h3>📝 備註</h3><textarea id="clientNotes" style="width:100%;height:200px;border:2px solid var(--main-pink);"></textarea><button type="button" class="btn-save" onclick="window.saveProfile()">💾 更新備註</button></div>
             </div>
         </div>
@@ -355,7 +366,7 @@
                 }
                 window.updateCalculations();
             }, (error) => {
-                alert("🚨 資料庫讀取遭拒絕！\n\n原因：" + error.message + "\n\n請聯絡工程師。");
+                alert("🚨 資料庫讀取遭拒絕！\n\n原因：" + error.message + "\n\n👉 這是因為您的 Firebase 30天測試期已過期。\n請至 Firebase 後台 -> Firestore Database -> 規則 (Rules)\n將規則改為 allow read, write: if true; 並發布！");
             });
         };
 
@@ -428,7 +439,6 @@
             
             if(window.selectedPosClient && window.selectedPosClient.transactions) {
                 const pastTrans = window.safeArray(window.selectedPosClient.transactions);
-                // V106: 如果曾經做過，但名字裡有「模特」，就不算數，依舊保有首購資格
                 if(pastTrans.some(t => t.item.includes('上睫毛') && !t.item.includes('模特'))) isFirstTimeUpper = false;
                 if(pastTrans.some(t => t.item.includes('野生眉') && !t.item.includes('模特'))) isFirstTimeBrow = false;
             }
@@ -440,19 +450,17 @@
 
             window.cart.forEach(item => { 
                 if(item.category === '儲值/包堂' || item.price < 0 || item.isPackageRedemption) return; 
-                if(item.name.includes('模特')) return; // 模特價不參與自動計價
+                if(item.name.includes('模特')) return;
                 
                 item.price = item.originalPrice; 
                 item.badge = null;
 
-                // VIP 基礎價
                 if(activeVIP) { 
                     if(item.name.includes('野生眉')) item.price = VIP_PRICES.BROW; 
                     else if(item.name.includes('下睫毛')) item.price = VIP_PRICES.LASH_DOWN; 
                     else if(item.name.includes('上睫毛')) item.price = VIP_PRICES.LASH_UP; 
                 } 
                 
-                // 首次體驗價 (會覆蓋VIP價)
                 if(item.name.includes('上睫毛管理') && isFirstTimeUpper) {
                     item.price = 699;
                     item.badge = '首次體驗';
@@ -462,7 +470,6 @@
                     item.badge = '首次體驗';
                 }
 
-                // 加購與組合
                 if(item.name.includes('下睫毛管理') && effectiveHasUpper) {
                     item.price = 300;
                     item.badge = (item.badge ? item.badge + '+' : '') + '加購優惠';
@@ -501,6 +508,7 @@
             else document.getElementById('package_select_area').style.display = 'none'; 
         };
 
+        // V107: 儲值金同步與扣抵
         window.submitCheckout = async () => { 
             const hasRedemption = window.cart.some(i => i.isPackageRedemption);
             if(window.cart.length===0) return alert("購物車空的"); 
@@ -508,13 +516,21 @@
             let total = parseInt(document.getElementById('posTotal').innerText.replace('$','')); 
             const date = window.getLocalYMD(); const id = Date.now().toString(); 
             if (!window.selectedPosClient && name !== "Walk-in") { const match = window.clients.find(c => c.name === name); if(match) window.selectedPosClient = match; }
+            
+            const payMode = document.getElementById('payment_mode').value;
+            let transMethod = "一般結帳";
+            if(payMode === 'package') transMethod = "包堂扣抵";
+            else if(payMode === 'balance') transMethod = "儲值金扣抵"; // V107: 寫入為儲值金扣抵
+
             try {
-                await addDoc(collection(db,"pos_records"), { date, timestamp:Date.now(), client:name, total, items: window.cart.map(i=>i.name).join('+'), refId: id });
+                // POS 紀錄寫入 Method
+                await addDoc(collection(db,"pos_records"), { date, timestamp:Date.now(), client:name, total, items: window.cart.map(i=>i.name).join('+'), method: transMethod, refId: id });
+                
                 if(window.selectedPosClient) {
                     const freshA = (await getDoc(doc(db, "clients", window.selectedPosClient.firebaseId))).data();
                     let newBalA = parseInt(freshA.balance) || 0;
-                    const payMode = document.getElementById('payment_mode').value;
-                    const newTrans = { date, item: window.cart.map(i=>i.name).join('+'), amt: total, method: payMode === 'package' ? "包堂扣抵" : "一般結帳", refId: id };
+                    
+                    const newTrans = { date, item: window.cart.map(i=>i.name).join('+'), amt: total, method: transMethod, refId: id };
                     if(payMode === 'balance') newBalA -= total;
                     let newPkgs = [];
                     window.cart.forEach(item => { if (item.type === 'package_deal') { newPkgs.push({ id: 'pkg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9), name: item.name, content: item.packageContent || "一般包堂", totalSessions: item.sessionsCount, remainingSessions: item.sessionsCount, purchaseDate: date }); } });
@@ -542,6 +558,29 @@
                 }
                 alert("結帳完成！"); window.cart=[]; window.updateCalculations(); 
             } catch(e) { alert("結帳失敗: " + e.message); }
+        };
+
+        // V107 新增補扣儲值金功能
+        window.manualBalanceDeduct = async () => {
+            if(!window.currentClientId) return alert("請先選擇客戶！");
+            const c = window.clients.find(x => String(x.id) === String(window.currentClientId));
+            const amtStr = prompt(`請輸入【${c.name}】要補扣的儲值金金額：\n(目前餘額：$${c.balance || 0})`);
+            if(!amtStr || isNaN(amtStr)) return;
+            const amt = parseInt(amtStr);
+            const item = prompt("請輸入補扣項目名稱 (例如: 補登-上睫毛管理)：", "補登儲值金消費");
+            if(!item) return;
+            
+            const date = window.getLocalYMD();
+            const refId = "manual_" + Date.now().toString();
+            const newBal = (c.balance || 0) - amt;
+            const newTrans = { date, item: item, amt: amt, method: "儲值金扣抵", refId: refId };
+
+            try {
+                await updateDoc(doc(db, "clients", c.firebaseId), { balance: newBal, transactions: arrayUnion(newTrans) });
+                await addDoc(collection(db, "pos_records"), { date: date, timestamp: Date.now(), client: c.name, total: amt, items: item, method: "儲值金扣抵", refId: refId });
+                alert(`✅ 補登成功！已從 ${c.name} 的儲值金扣除 $${amt}。`);
+                window.loadClient(window.currentClientId);
+            } catch(e) { alert("補登失敗：" + e.message); }
         };
 
         window.loadClient = (id) => {
@@ -623,7 +662,8 @@
                             transMap.sort((a,b) => window.safeDate(b.date) - window.safeDate(a.date));
                             transMap.forEach((t) => {
                                 let idx = t._realIdx;
-                                bL.innerHTML += `<tr><td>${t.date||'未知'}</td><td>${t.item||'消費'}</td><td>$${t.amt||0}</td><td><button class="delete-btn" onclick="window.deleteTransaction(${idx})">🗑️</button></td></tr>`;
+                                // V107: 顯示 Method 讓核對更容易
+                                bL.innerHTML += `<tr><td>${t.date||'未知'}</td><td>${t.item||'消費'}<br><small style="color:var(--dark-pink)">(${t.method||'一般結帳'})</small></td><td>$${t.amt||0}</td><td><button class="delete-btn" onclick="window.deleteTransaction(${idx})">🗑️</button></td></tr>`;
                             });
                         }
                     }
@@ -631,7 +671,7 @@
 
                 window.renderTags();
             } catch (e) {
-                console.error("V106 致命崩潰:", e);
+                console.error("V107 致命崩潰:", e);
                 document.getElementById('mainContainer').innerHTML = `<div style="padding:20px; color:red; font-size:1.2rem; border:2px solid red;">系統發生崩潰！請截圖此畫面給工程師：<br><br>${e.stack}</div>`;
             }
         };
@@ -717,6 +757,7 @@
                     const cSnap = await getDocs(q);
                     if (!cSnap.empty) {
                         const cDoc = cSnap.docs[0]; const c = cDoc.data(); let updates = {};
+                        // V107: 加強儲值金返還邏輯
                         if (r.items.includes("儲值金")) { updates.balance = (c.balance || 0) - r.total; } 
                         else if (r.method && (r.method.includes("餘額") || r.method.includes("儲值"))) { updates.balance = (c.balance || 0) + r.total; }
                         

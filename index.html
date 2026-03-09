@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bianca_eye.studio 管理系統 (V105 權限警報版)</title>
+    <title>Bianca_eye.studio 管理系統 (V106 智能結帳版)</title>
     <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@300;400;700&display=swap" rel="stylesheet">
     
     <script>
-        // 全域錯誤捕捉，避免死得不明不白
         window.addEventListener('error', function(event) {
             alert("系統發生前端異常錯誤！\n錯誤：" + event.message + "\n請聯絡工程師。");
         });
@@ -139,7 +138,7 @@
     <div id="login-overlay">
         <div class="login-box">
             <h2>Bianca<br>Eye Studio</h2>
-            <div style="font-size: 0.9rem; margin-bottom: 15px; color: var(--dark-pink);">✨ V105 權限警報版</div>
+            <div style="font-size: 0.9rem; margin-bottom: 15px; color: var(--dark-pink);">✨ V106 智能結帳版</div>
             <input type="email" id="login_email" class="login-input" placeholder="Firebase Email">
             <input type="password" id="login_pwd" class="login-input" placeholder="密碼">
             <button id="btnLogin" class="login-btn">登入系統</button>
@@ -203,10 +202,8 @@
     <div id="crm-view" class="full-view">
         <button class="toggle-side-btn" onclick="window.toggleSidebar()">☰</button>
         <div class="sidebar" id="crmSidebar"><div style="text-align:center; margin-bottom:10px; margin-top:25px;"><button class="back-home-btn" onclick="window.goToDashboard()">🏠 回首頁</button></div><button class="add-btn" onclick="window.createNewClient()">+ 新增顧客</button>
-        
         <select id="regionFilter" style="width:100%; margin-bottom:5px;" onchange="window.renderClientList()"><option value="all">📍 所有地區</option><option value="新竹">新竹</option><option value="淡水">淡水</option></select>
         <select id="monthFilter" style="width:100%; margin-bottom:10px;" onchange="window.renderClientList()"><option value="all">📅 所有壽星</option><option value="01">1月</option><option value="02">2月</option><option value="03">3月</option><option value="04">4月</option><option value="05">5月</option><option value="06">6月</option><option value="07">7月</option><option value="08">8月</option><option value="09">9月</option><option value="10">10月</option><option value="11">11月</option><option value="12">12月</option></select>
-        
         <ul class="client-list" id="clientList"></ul><div id="clientTotalCount" style="text-align:center; font-weight:bold; margin-top:10px; color:var(--dark-pink);">👥 列表人數：0 人</div></div>
         <div class="main-container" id="mainContainer">
             <div class="tabs-header"><button class="tab-btn active" onclick="window.switchTab('profile', event)">📋 個人資料</button><button class="tab-btn" onclick="window.switchTab('sessions', event)">👁️ 課程紀錄</button><button class="tab-btn" onclick="window.switchTab('billing', event)">💰 消費紀錄</button><button class="tab-btn" onclick="window.switchTab('notes', event)">📝 備註 / 標籤</button></div>
@@ -340,7 +337,6 @@
 
         window.runSystemRepair = async () => { if(!confirm("確定執行資料庫健檢？")) return; const snap = await getDocs(collection(db, "clients")); let count = 0; snap.forEach(async docSnap => { let data = docSnap.data(); let updates = {}; let needsUpdate = false; if (!data.id) { updates.id = Date.now() + Math.floor(Math.random() * 1000); needsUpdate = true; } if (typeof data.balance !== 'number') { updates.balance = parseInt(data.balance) || 0; needsUpdate = true; } if (!Array.isArray(data.transactions)) { updates.transactions = []; needsUpdate = true; } if (!Array.isArray(data.sessions)) { updates.sessions = []; needsUpdate = true; } if (!Array.isArray(data.activePackages)) { updates.activePackages = []; needsUpdate = true; } if (!Array.isArray(data.tags)) { updates.tags = []; needsUpdate = true; } if (needsUpdate) { await updateDoc(doc(db, "clients", docSnap.id), updates); count++; } }); alert(`修復完成：${count} 筆資料`); location.reload(); };
 
-        // V105: 加上 Firebase 權限防護警報器
         window.startListeningDB = () => {
             onSnapshot(collection(db, "clients"), (snap) => {
                 window.clients = snap.docs.map(d => ({ firebaseId: d.id, ...d.data() }));
@@ -359,7 +355,7 @@
                 }
                 window.updateCalculations();
             }, (error) => {
-                alert("🚨 資料庫讀取遭拒絕！\n\n原因：" + error.message + "\n\n👉 這是因為您的 Firebase 30天測試期已過期。\n請至 Firebase 後台 -> Firestore Database -> 規則 (Rules)\n將規則改為 allow read, write: if true; 並發布！");
+                alert("🚨 資料庫讀取遭拒絕！\n\n原因：" + error.message + "\n\n請聯絡工程師。");
             });
         };
 
@@ -420,10 +416,93 @@
         window.removeCart = (idx) => { window.cart.splice(idx, 1); if(window.selectedCartIndex === idx) window.selectedCartIndex = -1; window.updateCalculations(); };
         window.applySingleItemDiscount = () => { if(window.selectedCartIndex === -1) return alert("請選商品"); const item = window.cart[window.selectedCartIndex]; let rate = prompt("折扣 (0.9=9折):"); if(rate) { item.price = Math.round(item.originalPrice * parseFloat(rate)); item.name = `${item.name} (${parseFloat(rate)*10}折)`; window.updateCalculations(); } };
 
-        window.applyMemberLogic = () => { const isVIP = document.getElementById('is_member_rate').checked; const isPackageMode = document.getElementById('payment_mode').value === 'package'; const hasPackageRedemption = window.cart.some(i => i.isPackageRedemption); if(isPackageMode || hasPackageRedemption) document.getElementById('is_member_rate').checked = true; const activeVIP = document.getElementById('is_member_rate').checked; window.cart.forEach(item => { if(item.category === '儲值/包堂' || item.price < 0 || item.isPackageRedemption) return; if(activeVIP) { item.isMemberPrice = true; if(item.name.includes('野生眉')) item.price = VIP_PRICES.BROW; else if(item.name.includes('下睫毛')) item.price = VIP_PRICES.LASH_DOWN; else if(item.name.includes('上睫毛')) item.price = VIP_PRICES.LASH_UP; } else { item.price = item.originalPrice; delete item.isMemberPrice; } }); };
-        window.updateCalculations = () => { const payMode = document.getElementById('payment_mode').value; if(payMode !== 'package') { window.cart = window.cart.filter(i => !i.isPackageRedemption); } else { const selector = document.getElementById('package_selector'); if(selector.value && window.cart.every(i => !i.isPackageRedemption)) { window.addPackageToCartFromSelector(); } } window.applyMemberLogic(); const list = document.getElementById('cartList'); list.innerHTML = ''; let total = 0; window.cart.forEach((i, idx) => { total += i.price; let activeClass = (idx === window.selectedCartIndex) ? 'active-item' : ''; list.innerHTML += `<div class="cart-item ${activeClass}" onclick="window.selectCartItem(${idx})"><div>${i.name}</div><span>$${i.price} <span class="cart-remove" onclick="window.removeCart(${idx})">×</span></span></div>`; }); document.getElementById('posTotal').innerText = `$${total}`; if(payMode === 'package') document.getElementById('package_select_area').style.display = 'block'; else document.getElementById('package_select_area').style.display = 'none'; };
+        // V106: 智能結帳邏輯核心 (首購、加購、組合)
+        window.applyMemberLogic = () => { 
+            const isPackageMode = document.getElementById('payment_mode').value === 'package'; 
+            const hasPackageRedemption = window.cart.some(i => i.isPackageRedemption); 
+            if(isPackageMode || hasPackageRedemption) document.getElementById('is_member_rate').checked = true; 
+            const activeVIP = document.getElementById('is_member_rate').checked; 
+            
+            let isFirstTimeUpper = true;
+            let isFirstTimeBrow = true;
+            
+            if(window.selectedPosClient && window.selectedPosClient.transactions) {
+                const pastTrans = window.safeArray(window.selectedPosClient.transactions);
+                // V106: 如果曾經做過，但名字裡有「模特」，就不算數，依舊保有首購資格
+                if(pastTrans.some(t => t.item.includes('上睫毛') && !t.item.includes('模特'))) isFirstTimeUpper = false;
+                if(pastTrans.some(t => t.item.includes('野生眉') && !t.item.includes('模特'))) isFirstTimeBrow = false;
+            }
+
+            let effectiveHasUpper = window.cart.some(i => i.name.includes('上睫毛'));
+            let effectiveHasLower = window.cart.some(i => i.name.includes('下睫毛'));
+            let hasTintUpper = window.cart.some(i => i.name.includes('濃黑養護-上睫毛'));
+            let hasTintLower = window.cart.some(i => i.name.includes('濃黑養護-下睫毛'));
+
+            window.cart.forEach(item => { 
+                if(item.category === '儲值/包堂' || item.price < 0 || item.isPackageRedemption) return; 
+                if(item.name.includes('模特')) return; // 模特價不參與自動計價
+                
+                item.price = item.originalPrice; 
+                item.badge = null;
+
+                // VIP 基礎價
+                if(activeVIP) { 
+                    if(item.name.includes('野生眉')) item.price = VIP_PRICES.BROW; 
+                    else if(item.name.includes('下睫毛')) item.price = VIP_PRICES.LASH_DOWN; 
+                    else if(item.name.includes('上睫毛')) item.price = VIP_PRICES.LASH_UP; 
+                } 
+                
+                // 首次體驗價 (會覆蓋VIP價)
+                if(item.name.includes('上睫毛管理') && isFirstTimeUpper) {
+                    item.price = 699;
+                    item.badge = '首次體驗';
+                }
+                if(item.name.includes('野生眉雕塑') && isFirstTimeBrow) {
+                    item.price = 699;
+                    item.badge = '首次體驗';
+                }
+
+                // 加購與組合
+                if(item.name.includes('下睫毛管理') && effectiveHasUpper) {
+                    item.price = 300;
+                    item.badge = (item.badge ? item.badge + '+' : '') + '加購優惠';
+                }
+                if(item.name.includes('野生眉雕塑') && (effectiveHasUpper || effectiveHasLower)) {
+                    item.price = Math.max(0, item.price - 100);
+                    item.badge = (item.badge ? item.badge + '+' : '') + '加購折$100';
+                }
+                if(item.name.includes('濃黑養護')) {
+                    if(hasTintUpper && hasTintLower) {
+                        if(item.name.includes('上睫毛')) item.price = 150;
+                        if(item.name.includes('下睫毛')) item.price = 100;
+                        item.badge = '組合優惠';
+                    }
+                }
+            }); 
+        };
+
+        window.updateCalculations = () => { 
+            const payMode = document.getElementById('payment_mode').value; 
+            if(payMode !== 'package') { window.cart = window.cart.filter(i => !i.isPackageRedemption); } 
+            else { const selector = document.getElementById('package_selector'); if(selector.value && window.cart.every(i => !i.isPackageRedemption)) { window.addPackageToCartFromSelector(); } } 
+            
+            window.applyMemberLogic(); 
+            
+            const list = document.getElementById('cartList'); list.innerHTML = ''; let total = 0; 
+            window.cart.forEach((i, idx) => { 
+                total += i.price; 
+                let activeClass = (idx === window.selectedCartIndex) ? 'active-item' : ''; 
+                let badgeHtml = i.badge ? `<span class="first-time-badge">${i.badge}</span>` : '';
+                list.innerHTML += `<div class="cart-item ${activeClass}" onclick="window.selectCartItem(${idx})"><div>${i.name} ${badgeHtml}</div><span>$${i.price} <span class="cart-remove" onclick="window.removeCart(${idx})">×</span></span></div>`; 
+            }); 
+            document.getElementById('posTotal').innerText = `$${total}`; 
+            
+            if(payMode === 'package') document.getElementById('package_select_area').style.display = 'block'; 
+            else document.getElementById('package_select_area').style.display = 'none'; 
+        };
 
         window.submitCheckout = async () => { 
+            const hasRedemption = window.cart.some(i => i.isPackageRedemption);
             if(window.cart.length===0) return alert("購物車空的"); 
             let name = document.getElementById('pos_client_name').value || "Walk-in"; 
             let total = parseInt(document.getElementById('posTotal').innerText.replace('$','')); 
@@ -475,7 +554,6 @@
                 window.switchTab('profile', {target: document.querySelector('.tab-btn')});
                 document.getElementById('profileErrorBox').innerHTML = ''; 
                 
-                // 區塊 1: 個人資料
                 try {
                     const safeSetVal = (elId, val) => { const el = document.getElementById(elId); if(el) el.value = val || ''; };
                     safeSetVal('p_name', c.name); safeSetVal('p_phone', c.phone); safeSetVal('p_birthday', c.birthday);
@@ -498,7 +576,6 @@
                     }
                 } catch(e) { document.getElementById('profileErrorBox').innerHTML = `<div style="color:red; padding:10px; border:1px solid red; margin-bottom:10px;">個人資料讀取異常: ${e.message}</div>`; }
 
-                // 區塊 2: 票券
                 try {
                     const pkgArea = document.getElementById('packageDisplayArea'); 
                     if(pkgArea) {
@@ -519,7 +596,6 @@
                     }
                 } catch (e) { document.getElementById('packageDisplayArea').innerHTML = `<div style="color:red; padding:10px;">票券讀取錯誤: ${e.message}</div>`; }
 
-                // 區塊 3: 課程紀錄
                 try {
                     let sessions = window.safeArray(c.sessions);
                     const sL = document.getElementById('sessionList'); 
@@ -536,7 +612,6 @@
                     }
                 } catch (e) { document.getElementById('sessionList').innerHTML = `<div style="color:red; padding:10px;">課程讀取錯誤: ${e.message}</div>`; }
 
-                // 區塊 4: 消費紀錄
                 try {
                     let trans = window.safeArray(c.transactions);
                     const bL = document.getElementById('billingList'); 
@@ -556,14 +631,13 @@
 
                 window.renderTags();
             } catch (e) {
-                console.error("V104 致命崩潰:", e);
+                console.error("V106 致命崩潰:", e);
                 document.getElementById('mainContainer').innerHTML = `<div style="padding:20px; color:red; font-size:1.2rem; border:2px solid red;">系統發生崩潰！請截圖此畫面給工程師：<br><br>${e.stack}</div>`;
             }
         };
 
         window.jumpToPosWithClient = () => { const c = window.clients.find(x => String(x.id) === String(window.currentClientId)); if(c) { window.goToPOS(); document.getElementById('pos_client_name').value = c.name; window.checkPosClient(c.name); } };
         
-        // V105 實裝左側客戶清單篩選功能
         window.renderClientList = () => { 
             const l = document.getElementById('clientList'); l.innerHTML = ''; 
             const region = document.getElementById('regionFilter').value;
